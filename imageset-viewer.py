@@ -37,9 +37,17 @@ class PascalVOC2007XML:
 
 
 class App:
-    def __init__(self, master, im_dir=None):
+    def __init__(self, master, im_dir=None, show_x=None, show_y=None, box_thick=1):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
+        """
+        @param show_x: 图片显示时候的宽度
+        @param show_y: 图片显示时的高度
+        @param box_thick: 画框的宽度
+        """
         self.master = master
+        self.show_x = show_x
+        self.show_y = show_y
+        self.box_thick = box_thick
 
         self.im_dir = tk.StringVar()
         self.path_entry = tk.Entry(master, text=self.im_dir, width=60, state='readonly')
@@ -54,7 +62,7 @@ class App:
         self.label1 = tk.Label(master, justify='left',
                           image=self.tkim, compound='center',
                           fg='white', bg='white',
-                          width = 600, height = 600)
+                          width = 1000, height = 1000)
         self.label1.grid(row=1, column=0)
 
         self.scrollbar = tk.Scrollbar(master, orient=tk.VERTICAL)
@@ -96,23 +104,37 @@ class App:
 
     def get_tkim(self, im_name_full):
         im = cv2.imread(im_name_full)
+        print('reading image:', im_name_full)
+        im_ht, im_wt, im_dt = im.shape
+        show_x = self.show_x
+        show_y = self.show_y
+        if show_x is None:
+            show_x = im_wt
+        if show_y is None:
+            show_y = im_ht
+        if show_x!=im_wt or show_y!=im_ht:
+            im = cv2.resize(im, (show_x, show_y))
+            print('doing resize!')
+            print('show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
+        scale_x = im_wt*1.0 / show_x
+        scale_y = im_ht*1.0 / show_y
         anno_name_full = im_name_full.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml')
         if os.path.exists(anno_name_full):
             boxes = self.get_boxes_from_voc_xml(anno_name_full)
             for box in boxes:
                 cv2.rectangle(im,
-                          pt1=(box[0], box[1]),
-                          pt2=(box[2], box[3]),
+                          pt1=(int(box[0]/scale_x), int(box[1]/scale_y)),
+                          pt2=(int(box[2]/scale_x), int(box[3]/scale_y)),
                           color=(0, 255, 0),
-                          thickness=1
+                          thickness=self.box_thick
                           )
         im = im[:, :, ::-1]  #bgr => rgb   necessary
-        tkim = ImageTk.PhotoImage(image=Image.fromarray(im))
+        tkim = ImageTk.PhotoImage(Image.fromarray(im))
         return tkim
 
     def get_surface_tkim(self):
         """封面图片"""
-        im = np.ndarray((400, 600, 3), dtype=np.uint8)
+        im = np.ndarray((500, 700, 3), dtype=np.uint8)
 
         cv2.putText(im, 'Please choose image set folder',
                     (30, 200),
@@ -152,10 +174,14 @@ class App:
 if __name__ == '__main__':
     root = tk.Tk()  #创建窗口对象的背景色
     root.title('imageset viewer')
-    root.geometry('900x700') #设置窗口大小
+    root.geometry('1400x1400') #设置窗口大小
 
-    im_dir = '/home/chris/data/VOC2007/VOCdevkit/VOC2007_original/JPEGImages'
-    app = App(root, im_dir)
+    #im_dir = '/home/chris/data/VOC2007/VOCdevkit/VOC2007_original/JPEGImages'
+    #im_dir = '/home/chris/data/HELA2018/JPEGImages'
+    #im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/TT100/JPEGImages'
+    im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/VOC2007/JPEGImages'
+    # app = App(root, im_dir, show_x=1000, show_y=1000, box_thick=2)
+    app = App(root, im_dir, box_thick=2)
 
     #进入消息循环
     root.mainloop()
