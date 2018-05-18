@@ -5,8 +5,9 @@ A GUI, for object detection dataset. Displaying single image with bounding boxes
 ![](./screenshot.png)
 
 ## Dependencies
-- OpenCV's python interface, e.g. cv2
+- Python2
 - `pip install --upgrade image pillow lxml numpy`
+- OpenCV's python interface, i.e. `cv2`
 
 ## Supported Function
 - Choosing image folder via button

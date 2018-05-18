@@ -40,6 +40,7 @@ class App:
     def __init__(self, master, im_dir=None, show_x=None, show_y=None, box_thick=1):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
+        @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
         @param show_x: 图片显示时候的宽度
         @param show_y: 图片显示时的高度
         @param box_thick: 画框的宽度
@@ -56,9 +57,12 @@ class App:
         self.choose_path_btn = tk.Button(master, text='输入路径', command=self.selectPath)
         self.choose_path_btn.grid(row=0, column=1)
 
-        im_name = '/home/chris/Pictures/im/girl2.jpg'
-        #self.tkim = ImageTk.PhotoImage(Image.open(im_name))
+        ## 设定封面
         self.tkim = self.get_surface_tkim()
+        ## 也可以自己搞张图，替代默认的很丑的封面
+        #im_name = '/home/chris/Pictures/im/girl2.jpg'
+        #self.tkim = ImageTk.PhotoImage(Image.open(im_name))
+
         self.label1 = tk.Label(master, justify='left',
                           image=self.tkim, compound='center',
                           fg='white', bg='white',
@@ -79,18 +83,8 @@ class App:
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
         self.listbox.bind('<<ListboxSelect>>', self.callback)
-
         self.scrollbar.config(command=self.listbox.yview)
-
         self.scrollbar.grid(row=1, column=3, sticky=tk.N+tk.S)
-
-        #self.button = tk.Button(master, text='text1', command=self.print_hello)
-        #self.button.grid(row=0, column=2)
-
-    def print_hello(self):
-        im_name = '/home/chris/Pictures/im/girl3.jpg'
-        self.tkim = ImageTk.PhotoImage(Image.open(im_name))
-        self.label1.configure(image=self.tkim)
 
     def callback(self, event=None):
         im_id = self.listbox.curselection()
@@ -103,6 +97,9 @@ class App:
                 #print(im_name_full)
 
     def get_tkim(self, im_name_full):
+        """
+        读取图像并转化为tkim。必要时做resize
+        """
         im = cv2.imread(im_name_full)
         print('reading image:', im_name_full)
         im_ht, im_wt, im_dt = im.shape
@@ -154,12 +151,12 @@ class App:
         return boxes
 
     def selectPath(self):
-        path_ = tkFileDialog.askdirectory()
+        pth = tkFileDialog.askdirectory()
 
         #清空listbox中的元素
         self.listbox.delete(0, len(self.im_names)-1)
 
-        self.fill_im_names(path_)
+        self.fill_im_names(pth)
 
     def fill_im_names(self, im_dir):
         if im_dir is not None:
@@ -176,12 +173,23 @@ if __name__ == '__main__':
     root.title('imageset viewer')
     root.geometry('1400x1400') #设置窗口大小
 
-    #im_dir = '/home/chris/data/VOC2007/VOCdevkit/VOC2007_original/JPEGImages'
-    #im_dir = '/home/chris/data/HELA2018/JPEGImages'
-    #im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/TT100/JPEGImages'
-    im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/VOC2007/JPEGImages'
-    # app = App(root, im_dir, show_x=1000, show_y=1000, box_thick=2)
+    ## 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
+    app = App(root, im_dir=None, box_thick=2)
+
+    """
+    ## 也可以在代码中指定
+    ## eg1: 指定图片路径
+    im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/TT100/JPEGImages'
+    app = App(root, im_dir)
+
+    ## eg2: 还可以指定显示的图片的长度和宽度，也就是要做图像缩放了。
+    app = App(root, im_dir, show_x=1000, show_y=1000)
+
+    ## eg3: 指定画框的宽度
     app = App(root, im_dir, box_thick=2)
+    # 或者更多的指定：
+    app = App(root, im_dir, show_x=1000, show_y=1000, box_thick=2)
+    """
 
     #进入消息循环
     root.mainloop()
