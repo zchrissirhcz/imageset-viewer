@@ -91,7 +91,7 @@ class App:
         if im_id:
             im_name = self.listbox.get(im_id)
             if (im_name.endswith('.jpg') or im_name.endswith('.png')):
-                im_name_full = os.path.join(self.im_dir.get(), im_name)
+                im_name_full = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_name_full)
                 self.label1.configure(image=self.tkim)
                 #print(im_name_full)
@@ -115,8 +115,10 @@ class App:
             print('show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
         scale_x = im_wt*1.0 / show_x
         scale_y = im_ht*1.0 / show_y
-        anno_name_full = im_name_full.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml')
+        anno_name_full = im_name_full.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
+        print('anno_name_full is:', anno_name_full)
         if os.path.exists(anno_name_full):
+            print(' existing the xml file!')
             boxes = self.get_boxes_from_voc_xml(anno_name_full)
             for box in boxes:
                 cv2.rectangle(im,
