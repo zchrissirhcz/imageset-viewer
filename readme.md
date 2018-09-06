@@ -6,7 +6,8 @@ A GUI, for object detection dataset. Displaying single image with bounding boxes
 
 ## Dependencies
 - Python2
-- `pip install --upgrade image pillow lxml numpy`
+- `sudo pip install --upgrade image pillow lxml numpy`
+- `sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
 - OpenCV's python interface, i.e. `cv2`
 
 ## Supported Function
