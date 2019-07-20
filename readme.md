@@ -8,17 +8,17 @@ A GUI, for object detection dataset. Displaying single image with bounding boxes
 
 - Python
 
-Support Python 2 & 3
+    Support Python 2 & 3
 
-Anaconda installed Python is recommended
+    Anaconda installed Python is recommended
 
 - Python packages
 
-`pip install image pillow lxml numpy opencv-python`
+    `pip install image pillow lxml numpy opencv-python`
 
 - apt packages
 
-`sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
+    `sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
 
 ## Supported Function
 - Choosing image folder via button
