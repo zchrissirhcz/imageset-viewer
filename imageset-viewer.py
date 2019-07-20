@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # coding:utf-8
 # Author: Zhuo Zhang (imzhuo@foxmail.com)
 # Date: 2017.10.22 22:36
@@ -13,10 +14,16 @@
 
 from __future__ import print_function
 
-import Tkinter as tk
+try:
+    import Tkinter as tk
+except:
+    import tkinter as tk
 from PIL import Image, ImageTk #pillow模块
 import os
-import tkFileDialog
+try:
+    from tkFileDialog import askdirectory
+except:
+    from tkinter.filedialog import askdirectory
 import cv2
 from lxml import etree
 import numpy as np
@@ -153,7 +160,7 @@ class App:
         return boxes
 
     def selectPath(self):
-        pth = tkFileDialog.askdirectory()
+        pth = askdirectory()
 
         #清空listbox中的元素
         self.listbox.delete(0, len(self.im_names)-1)

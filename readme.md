@@ -5,10 +5,20 @@ A GUI, for object detection dataset. Displaying single image with bounding boxes
 ![](./screenshot.png)
 
 ## Dependencies
-- Python2
-- `sudo pip install --upgrade image pillow lxml numpy`
-- `sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
-- OpenCV's python interface, i.e. `cv2`
+
+- Python
+
+Support Python 2 & 3
+
+Anaconda installed Python is recommended
+
+- Python packages
+
+`pip install image pillow lxml numpy opencv-python`
+
+- apt packages
+
+`sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
 
 ## Supported Function
 - Choosing image folder via button
