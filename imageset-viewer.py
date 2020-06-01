@@ -18,7 +18,7 @@ try:
     import Tkinter as tk
 except:
     import tkinter as tk
-from PIL import Image, ImageTk #pillow模块
+from PIL import Image, ImageTk, ImageFont, ImageDraw #pillow模块
 import os
 try:
     from tkFileDialog import askdirectory
@@ -28,6 +28,40 @@ import cv2
 from lxml import etree
 import numpy as np
 
+
+def zz_draw_text(im, text, text_org, font):
+    """
+    Draw text on OpenCV's Image (ndarray)
+    Implemented by: ndarray -> pil's image -> draw text -> ndarray
+
+    注意：OpenCV的puttext缺点：字体过大，有锯齿，不能显示中文。
+
+    @param im: opencv loaded image
+    @param text: text(string) to be put. support Chinese
+    @param font: font, e.g. ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', font_size)
+
+    用法示例：
+    font_size = 20
+    font = ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', font_size)
+    text_org = (256, 256)
+    im = zz_draw_text(im, "object", text_org, font)
+    """
+    im_pil = Image.fromarray(im)
+    draw = ImageDraw.Draw(im_pil)
+    draw.text(text_org, text, font=font, fill=(0, 0, 255, 0))
+    output = np.array(im_pil)
+    return output
+
+
+class BndBox(object):
+    def __init__(self, x1=0, y1=0, x2=0, y2=0, cls=None):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.cls_name = cls # class name
+
+
 class PascalVOC2007XML:
     def __init__(self, xml_full_name):
         # todo:校验xml_full_name这个文件的合法性
@@ -36,9 +70,14 @@ class PascalVOC2007XML:
 
     def get_boxes(self):
         if len(self.boxes) == 0:
-            for bbox in self.tree.xpath('//bndbox'):
-                pts = bbox.getchildren()
-                box = [int(float(_.text)) for _ in pts]
+            for obj in self.tree.xpath('//object'):
+                box = BndBox()
+                for item in obj.getchildren():
+                    if (item.tag=='name'):
+                        box.cls_name = item.text
+                    elif (item.tag=='bndbox'):
+                        coords = [int(float(_.text)) for _ in item.getchildren()]
+                        box.x1, box.y1, box.x2, box.y2 = coords
                 self.boxes.append(box)
         return self.boxes
 
@@ -128,12 +167,25 @@ class App:
             print(' existing the xml file!')
             boxes = self.get_boxes_from_voc_xml(anno_name_full)
             for box in boxes:
+                xmin = int(box.x1/scale_x)
+                ymin = int(box.y1/scale_y)
+                xmax = int(box.x2/scale_x)
+                ymax = int(box.y2/scale_y)
                 cv2.rectangle(im,
-                          pt1=(int(box[0]/scale_x), int(box[1]/scale_y)),
-                          pt2=(int(box[2]/scale_x), int(box[3]/scale_y)),
+                          pt1=(xmin, ymin),
+                          pt2=(xmax, ymax),
                           color=(0, 255, 0),
                           thickness=self.box_thick
                           )
+                # cv2.putText(im, "object",
+                #     (xmin+10, ymin-20),
+                #     cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 5
+                # )
+                font_size = 16
+                font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
+                text_org = (xmin+10, ymin+10)
+                im = zz_draw_text(im, box.cls_name, text_org, font)
+
         im = im[:, :, ::-1]  #bgr => rgb   necessary
         tkim = ImageTk.PhotoImage(Image.fromarray(im))
         return tkim

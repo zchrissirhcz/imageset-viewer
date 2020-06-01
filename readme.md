@@ -20,8 +20,9 @@ A GUI, for object detection dataset. Displaying single image with bounding boxes
 
     `sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
 
-## Supported Function
+## Supported Features
 - Choosing image folder via button
 - Viewing images with annotated bounding boxes via mouse or arrowdown key
 - Change box thick (in code)
 - Displaying with specified resizing image height/width (in code)
+- Show object class name, supporting Chinese chars
