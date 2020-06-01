@@ -22,22 +22,21 @@ Changelog:
     You may need this: pip install --upgrade image pillow lxml numpy
 """
 
-try:
-    import Tkinter as tk
-except:
-    import tkinter as tk
 from PIL import Image, ImageTk, ImageFont, ImageDraw # pillow module
 import os
-try:
-    from tkFileDialog import askdirectory
-except:
-    from tkinter.filedialog import askdirectory
 import cv2
 from lxml import etree
 import numpy as np
 
+try: # py3
+    import tkinter as tk
+    from tkinter.filedialog import askdirectory
+except: # py2
+    import Tkinter as tk
+    from tkFileDialog import askdirectory
 
-def zz_draw_text(im, text, text_org, font):
+
+def draw_text(im, text, text_org, color=(0,0,255,0), font=None):
     """
     Draw text on OpenCV's Image (ndarray)
     Implemented by: ndarray -> pil's image -> draw text -> ndarray
@@ -52,11 +51,11 @@ def zz_draw_text(im, text, text_org, font):
     font_size = 20
     font = ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', font_size)
     text_org = (256, 256)
-    im = zz_draw_text(im, "object", text_org, font)
+    im = draw_text(im, "object", text_org, font)
     """
     im_pil = Image.fromarray(im)
     draw = ImageDraw.Draw(im_pil)
-    draw.text(text_org, text, font=font, fill=(0, 0, 255, 0))
+    draw.text(text_org, text, font=font, fill=color)
     output = np.array(im_pil)
     return output
 
@@ -71,9 +70,9 @@ class BndBox(object):
 
 
 class PascalVOC2007XML:
-    def __init__(self, xml_full_name):
-        # TODO:校验xml_full_name这个文件的合法性
-        self.tree = etree.parse(xml_full_name)
+    def __init__(self, xml_pth):
+        # TODO: validate xml_pth's content
+        self.tree = etree.parse(xml_pth)
         self.boxes = []
 
     def get_boxes(self):
@@ -97,15 +96,16 @@ class VOC_Viewer(tk.Tk):
         @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
         @param show_x: 图片显示时候的宽度
         @param show_y: 图片显示时的高度
-        @param box_thick: 画框的宽度
+        @param box_thick: thickness of bounding box
         """
         super().__init__()
 
-        # set title and window size
-        self.title('imageset viewer')
-        self.width = (int)(0.7 * self.winfo_screenwidth())
-        self.height = (int)(0.7 * self.winfo_screenheight())
+        # set title, window size and background
+        self.title('ImageSet Viewer')
+        self.width = (int)(0.6 * self.winfo_screenwidth())
+        self.height = (int)(0.6 * self.winfo_screenheight())
         self.geometry('%dx%d' % (self.width, self.height))
+        self.configure(bg="#34373c")
 
         # custom settings
         self.show_x = show_x
@@ -113,23 +113,26 @@ class VOC_Viewer(tk.Tk):
         self.box_thick = box_thick
 
         self.im_dir = tk.StringVar()
-        self.path_entry = tk.Entry(self, text=self.im_dir, width=60, state='readonly')
-        self.path_entry.grid(row=0, column=0)
+        self.path_entry = tk.Entry(self, text=self.im_dir, width=80, state='readonly')
+        self.path_entry.grid(row=0, column=0, sticky=tk.E)
 
-        self.choose_path_btn = tk.Button(self, text='图片路径', command=self.selectPath)
-        self.choose_path_btn.grid(row=0, column=1)
+        self.choose_path_btn = tk.Button(self, text='Image Folder', command=self.select_path,
+            bg='#34373c', fg='#f2f2f2')
+        self.choose_path_btn.grid(row=0, column=1, sticky=tk.E)
+
+        image_names_label = tk.Label(self, text="File Names", bg='#34373c', fg='#f2f2f2')
+        image_names_label.grid(row=0, column=2)
 
         # Surface image
-        self.tkim = self.get_surface_tkim()
-        # You may also change the surface with your favorite picture
-        # im_name = '/home/chris/Pictures/im/girl2.jpg'
-        # self.tkim = ImageTk.PhotoImage(Image.open(im_name))
+        self.surface = self.get_surface_image()
+        # self.surface = self.cv_to_tk(cv2.imread('surface.jpg')) # Use image file
 
-        self.labelPic = tk.Label(self, justify='left',
-                          image=self.tkim, compound='center',
-                          fg='white', bg='white',
+        self.image_label = tk.Label(self, justify='left',
+                          image=self.surface, compound='center',
+                          bg='#34373c', fg='#f2f2f2',
                           width = self.width-250, height = self.height-50)
-        self.labelPic.grid(row=1, column=0)
+        
+        self.image_label.grid(row=1, column=0, columnspan=2)#, padx=20)#, pady=50)
 
         self.scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
 
@@ -139,7 +142,6 @@ class VOC_Viewer(tk.Tk):
         self.im_names = []
         if im_dir is not None:
             self.im_dir.set(im_dir)
-            # Get natural file list, same as Windows explorer's result
             self.im_names = [_ for _ in os.listdir(self.im_dir.get())]
             self.im_names.sort()
             for im_name in self.im_names:
@@ -153,17 +155,17 @@ class VOC_Viewer(tk.Tk):
         if im_id:
             im_name = self.listbox.get(im_id)
             if (im_name.endswith('.jpg') or im_name.endswith('.png')):
-                im_name_full = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
-                self.tkim = self.get_tkim(im_name_full)
-                self.labelPic.configure(image=self.tkim)
-                # print(im_name_full)
+                im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
+                self.tkim = self.get_tkim(im_pth)
+                self.image_label.configure(image=self.tkim)
+                # print(im_pth)
 
-    def get_tkim(self, im_name_full):
+    def get_tkim(self, im_pth):
         """
         读取图像并转化为tkim。必要时做resize
         """
-        im = cv2.imread(im_name_full)
-        print('reading image:', im_name_full)
+        im = cv2.imread(im_pth)
+        print('Image file is:', im_pth)
         im_ht, im_wt, im_dt = im.shape
         show_x = self.show_x
         show_y = self.show_y
@@ -177,70 +179,72 @@ class VOC_Viewer(tk.Tk):
             print('show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
         scale_x = im_wt*1.0 / show_x
         scale_y = im_ht*1.0 / show_y
-        anno_name_full = im_name_full.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
-        print('anno_name_full is:', anno_name_full)
-        if os.path.exists(anno_name_full):
-            print(' existing the xml file!')
-            boxes = self.get_boxes_from_voc_xml(anno_name_full)
+        xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
+        print('XML annotation file is:', xml_pth, end=', ')
+        if os.path.exists(xml_pth):
+            print('exist')
+            boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 xmin = int(box.x1/scale_x)
                 ymin = int(box.y1/scale_y)
                 xmax = int(box.x2/scale_x)
                 ymax = int(box.y2/scale_y)
-                cv2.rectangle(im,
-                          pt1=(xmin, ymin),
-                          pt2=(xmax, ymax),
-                          color=(0, 255, 0),
-                          thickness=self.box_thick
-                          )
+                cv2.rectangle(im,  pt1=(xmin, ymin), pt2=(xmax, ymax),
+                          color=(0, 255, 0), thickness=self.box_thick)
                 font_size = 16
                 font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
                 text_org = (xmin+10, ymin+10)
-                im = zz_draw_text(im, box.cls_name, text_org, font)
-
-        im = im[:, :, ::-1]  # bgr => rgb   necessary
-        tkim = ImageTk.PhotoImage(Image.fromarray(im))
+                color = (0, 0, 255, 0)
+                im = draw_text(im, box.cls_name, text_org, color, font)
+        else:
+            print("doesn't exist")
+        tkim = self.cv_to_tk(im)
         return tkim
 
-    def get_surface_tkim(self):
-        """封面图片"""
-        im = np.ndarray((500, 700, 3), dtype=np.uint8)
+    @staticmethod
+    def cv_to_tk(im):
+        """Convert OpenCV's (numpy) image to Tkinter-compatible photo image"""
+        im = im[:, :, ::-1]  # bgr => rgb
+        return ImageTk.PhotoImage(Image.fromarray(im))
 
-        cv2.putText(im, 'Please choose image set folder',
-                    (30, 200),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    color=(255,255,255)
-                    )
-        im = im[:, :, ::-1]
+    def get_surface_image(self):
+        """Return surface image, which is ImageTK type"""
+        im = np.ndarray((256, 256, 3), dtype=np.uint8)
+        for y in range(256):
+            for x in range(256):
+                im[y, x, :] = (128, 128, 0)
 
-        tkim = ImageTk.PhotoImage(image=Image.fromarray(im))
-        return tkim
+        im = cv2.resize(im, ((int)(self.width*0.6), (int)(self.height*0.6)))
 
-    def get_boxes_from_voc_xml(self, anno_name_full):
-        anno = PascalVOC2007XML(anno_name_full)
+        font_size = 25
+        font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
+        text_org = (self.width*0.16, self.height*0.26)
+        text = 'Please choose image set folder'
+        im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
+        surface = self.cv_to_tk(im)
+        return surface
+
+    def parse_xml(self, xml_pth):
+        anno = PascalVOC2007XML(xml_pth)
         boxes = anno.get_boxes()
         return boxes
 
-    def selectPath(self):
+    def select_path(self):
         pth = askdirectory()
-
-        # 清空listbox中的元素
-        self.listbox.delete(0, len(self.im_names)-1)
-
+        self.listbox.delete(0, len(self.im_names)-1) # delete all elements
         self.fill_im_names(pth)
 
     def fill_im_names(self, im_dir):
         if im_dir is not None:
             self.im_dir.set(im_dir)
-            # 获取自然顺序的文件列表
+            # Get natural order of image file names
             self.im_names = [_ for _ in os.listdir(im_dir)]
             self.im_names.sort()
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
 
 if __name__ == '__main__':
-    ## 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
+    # 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
     app = VOC_Viewer(im_dir=None, box_thick=2)
 
     """
