@@ -14,7 +14,7 @@ __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection an
 """
 Changelog:
 - 2020-06-01 14:44:01
-    Draw object class name. Add license. Polish meta info.
+    Draw object class name. Add license. Polish meta info. Adjust UI.
 
 - 2017.10.22 22:36
     Created project. Dependencies: Python, Tkinter(GUI), opencv(image processing), 
@@ -104,40 +104,56 @@ class VOC_Viewer(tk.Tk):
         self.title('ImageSet Viewer')
         self.width = (int)(0.6 * self.winfo_screenwidth())
         self.height = (int)(0.6 * self.winfo_screenheight())
-        self.geometry('%dx%d' % (self.width, self.height))
+        self.geometry('%dx%d+200+100' % (self.width, self.height))
         self.configure(bg="#34373c")
+        self.minsize(800, 600)
 
         # custom settings
         self.show_x = show_x
         self.show_y = show_y
         self.box_thick = box_thick
 
-        self.im_dir = tk.StringVar()
-        self.path_entry = tk.Entry(self, text=self.im_dir, width=80, state='readonly')
-        self.path_entry.grid(row=0, column=0, sticky=tk.E)
+        self.init_components(im_dir)
+    
+    def init_components(self, im_dir):
+        # 设置顶级窗体的行列权重，否则子组件的拉伸不会填充整个窗体
+        # ref: https://blog.csdn.net/acaic/article/details/80963688
+        self.rowconfigure(0,weight=1)
+        self.columnconfigure(0,weight=1)
 
-        self.choose_path_btn = tk.Button(self, text='Image Folder', command=self.select_path,
-            bg='#34373c', fg='#f2f2f2')
-        self.choose_path_btn.grid(row=0, column=1, sticky=tk.E)
+        # Top Level Layout: main_frame & side_frame
+        main_frame = tk.LabelFrame(self, bg='#34373c')
+        main_frame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
 
-        image_names_label = tk.Label(self, text="File Names", bg='#34373c', fg='#f2f2f2')
-        image_names_label.grid(row=0, column=2)
+        side_frame = tk.LabelFrame(self, bg='#34373c')
+        side_frame.grid(row=0, column=1, padx=10, pady=10, sticky=tk.NSEW)
 
-        # Surface image
-        self.surface = self.get_surface_image()
+        # main_frame: folder_frame & image region
+        main_frame.rowconfigure(0, weight=5)
+        main_frame.rowconfigure(1, weight=95)
+        main_frame.columnconfigure(0, weight=1)
+
+        folder_frame = tk.LabelFrame(main_frame, bg='#34373c')
+        folder_frame.grid(row=0, column=0, sticky=tk.NSEW)
+
+        self.surface = self.get_surface_image() # Surface image
         # self.surface = self.cv_to_tk(cv2.imread('surface.jpg')) # Use image file
-
-        self.image_label = tk.Label(self, justify='left',
-                          image=self.surface, compound='center',
-                          bg='#34373c', fg='#f2f2f2',
-                          width = self.width-250, height = self.height-50)
+        self.image_label = tk.Label(main_frame, image=self.surface,
+                          bg='#34373c', fg='#f2f2f2', compound='center')
         
-        self.image_label.grid(row=1, column=0, columnspan=2)#, padx=20)#, pady=50)
+        self.image_label.grid(row=1, column=0)
 
-        self.scrollbar = tk.Scrollbar(self, orient=tk.VERTICAL)
+        # side_frame
+        side_frame.rowconfigure(0, weight=5)
+        side_frame.rowconfigure(1, weight=95)
 
-        self.listbox = tk.Listbox(self, yscrollcommand=self.scrollbar.set)
-        self.listbox.grid(row=1, column=2, sticky=tk.N+tk.S)
+        image_names_label = tk.Label(side_frame, text="File Names", bg='#34373c', fg='#f2f2f2')
+        image_names_label.grid(row=0, column=0)
+
+        self.scrollbar = tk.Scrollbar(side_frame, orient=tk.VERTICAL)
+
+        self.listbox = tk.Listbox(side_frame, yscrollcommand=self.scrollbar.set)
+        self.listbox.grid(row=1, column=0, sticky=tk.NSEW)
 
         self.im_names = []
         if im_dir is not None:
@@ -148,7 +164,19 @@ class VOC_Viewer(tk.Tk):
                 self.listbox.insert(tk.END, im_name)
         self.listbox.bind('<<ListboxSelect>>', self.callback)
         self.scrollbar.config(command=self.listbox.yview)
-        self.scrollbar.grid(row=1, column=3, sticky=tk.N+tk.S)
+        self.scrollbar.grid(row=1, sticky=tk.NSEW)
+
+        # folder_frame
+        folder_frame.rowconfigure(0, weight=1)
+        folder_frame.columnconfigure(0, weight=1)
+        folder_frame.columnconfigure(1, weight=9)
+        self.choose_path_btn = tk.Button(folder_frame, text='Image Folder',
+        command=self.select_path, bg='#34373c', fg='#f2f2f2')
+        self.choose_path_btn.grid(row=0, column=0, sticky=tk.NSEW)
+
+        self.im_dir = tk.StringVar()
+        self.path_entry = tk.Entry(folder_frame, text=self.im_dir, state='readonly')
+        self.path_entry.grid(row=0, column=1, padx=5, sticky=tk.NSEW)
 
     def callback(self, event=None):
         im_id = self.listbox.curselection()
@@ -162,7 +190,8 @@ class VOC_Viewer(tk.Tk):
 
     def get_tkim(self, im_pth):
         """
-        读取图像并转化为tkim。必要时做resize
+        Load image and annotation, draw on image, and convert to image.
+        When necessary, image resizing is utilized.
         """
         im = cv2.imread(im_pth)
         print('Image file is:', im_pth)
@@ -182,7 +211,7 @@ class VOC_Viewer(tk.Tk):
         xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
         print('XML annotation file is:', xml_pth, end=', ')
         if os.path.exists(xml_pth):
-            print('exist')
+            print('')
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 xmin = int(box.x1/scale_x)
@@ -193,7 +222,10 @@ class VOC_Viewer(tk.Tk):
                           color=(0, 255, 0), thickness=self.box_thick)
                 font_size = 16
                 font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
-                text_org = (xmin+10, ymin+10)
+                tx = xmin
+                ty = ymin-20
+                if(ty<0): ty = ymin+20
+                text_org = (tx, ty)
                 color = (0, 0, 255, 0)
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
@@ -212,15 +244,16 @@ class VOC_Viewer(tk.Tk):
         im = np.ndarray((256, 256, 3), dtype=np.uint8)
         for y in range(256):
             for x in range(256):
-                im[y, x, :] = (128, 128, 0)
+                im[y, x, :] = (60, 55, 52) # #34373c(RGB)'s BGR split
 
         im = cv2.resize(im, ((int)(self.width*0.6), (int)(self.height*0.6)))
 
-        font_size = 25
+        font_size = 30
         font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
         text_org = (self.width*0.16, self.height*0.26)
-        text = 'Please choose image set folder'
+        text = 'ImageSet Viewer'
         im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
+        
         surface = self.cv_to_tk(im)
         return surface
 
@@ -245,7 +278,7 @@ class VOC_Viewer(tk.Tk):
 
 if __name__ == '__main__':
     # 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
-    app = VOC_Viewer(im_dir=None, box_thick=2)
+    app = VOC_Viewer(im_dir=None, box_thick=1)
 
     """
     ## 也可以在代码中指定
