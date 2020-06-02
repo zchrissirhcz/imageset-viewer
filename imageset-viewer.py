@@ -6,7 +6,7 @@ from __future__ import print_function
 __author__ = 'Zhuo Zhang'
 __copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
 __license__ = 'MIT'
-__version__ = '0.1'
+__version__ = '0.2'
 __email__ = 'imzhuo@foxmail.com'
 __status__ = 'Development'
 __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
@@ -15,7 +15,7 @@ __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection an
 Changelog:
 
 - 2020-06-02 16:40   v0.2
-    User choose image and annotation folders separately.
+    User choose image and annotation folders separately. Better UI layout.
 
 - 2020-06-01 14:44  v0.1
     Draw object class name. Add license. Polish meta info. Adjust UI.
