@@ -13,10 +13,14 @@ __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection an
 
 """
 Changelog:
-- 2020-06-01 14:44:01
+
+- 2020-06-02 16:40   v0.2
+    User choose image and annotation folders separately.
+
+- 2020-06-01 14:44  v0.1
     Draw object class name. Add license. Polish meta info. Adjust UI.
 
-- 2017.10.22 22:36
+- 2017.10.22 22:36  v0.0
     Created project. Dependencies: Python, Tkinter(GUI), opencv(image processing), 
     lxml(annotation parsing).
     You may need this: pip install --upgrade image pillow lxml numpy
@@ -100,18 +104,20 @@ class VOC_Viewer(tk.Tk):
         """
         super().__init__()
 
+        # custom settings
+        self.show_x = show_x
+        self.show_y = show_y
+        self.box_thick = box_thick
+        self.bg = '#34373c'
+        self.fg = '#f2f2f2'
+
         # set title, window size and background
         self.title('ImageSet Viewer')
         self.width = (int)(0.6 * self.winfo_screenwidth())
         self.height = (int)(0.6 * self.winfo_screenheight())
         self.geometry('%dx%d+200+100' % (self.width, self.height))
-        self.configure(bg="#34373c")
+        self.configure(bg=self.bg)
         self.minsize(800, 600)
-
-        # custom settings
-        self.show_x = show_x
-        self.show_y = show_y
-        self.box_thick = box_thick
 
         self.init_components(im_dir)
     
@@ -122,24 +128,24 @@ class VOC_Viewer(tk.Tk):
         self.columnconfigure(0,weight=1)
 
         # Top Level Layout: main_frame & side_frame
-        main_frame = tk.LabelFrame(self, bg='#34373c')
+        main_frame = tk.LabelFrame(self, bg=self.bg)
         main_frame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
 
-        side_frame = tk.LabelFrame(self, bg='#34373c')
+        side_frame = tk.LabelFrame(self, bg=self.bg)
         side_frame.grid(row=0, column=1, padx=10, pady=10, sticky=tk.NSEW)
 
-        # main_frame: folder_frame & image region
+        # main_frame: directory_frame & image region
         main_frame.rowconfigure(0, weight=5)
         main_frame.rowconfigure(1, weight=95)
         main_frame.columnconfigure(0, weight=1)
 
-        folder_frame = tk.LabelFrame(main_frame, bg='#34373c')
-        folder_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        directory_frame = tk.LabelFrame(main_frame, bg='#34373c')
+        directory_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
         self.surface = self.get_surface_image() # Surface image
         # self.surface = self.cv_to_tk(cv2.imread('surface.jpg')) # Use image file
         self.image_label = tk.Label(main_frame, image=self.surface,
-                          bg='#34373c', fg='#f2f2f2', compound='center')
+                          bg=self.bg, fg=self.fg, compound='center')
         
         self.image_label.grid(row=1, column=0)
 
@@ -147,7 +153,7 @@ class VOC_Viewer(tk.Tk):
         side_frame.rowconfigure(0, weight=5)
         side_frame.rowconfigure(1, weight=95)
 
-        image_names_label = tk.Label(side_frame, text="File Names", bg='#34373c', fg='#f2f2f2')
+        image_names_label = tk.Label(side_frame, text="Image Files", bg=self.bg, fg=self.fg)
         image_names_label.grid(row=0, column=0)
 
         self.scrollbar = tk.Scrollbar(side_frame, orient=tk.VERTICAL)
@@ -166,17 +172,27 @@ class VOC_Viewer(tk.Tk):
         self.scrollbar.config(command=self.listbox.yview)
         self.scrollbar.grid(row=1, sticky=tk.NSEW)
 
-        # folder_frame
-        folder_frame.rowconfigure(0, weight=1)
-        folder_frame.columnconfigure(0, weight=1)
-        folder_frame.columnconfigure(1, weight=9)
-        self.choose_path_btn = tk.Button(folder_frame, text='Image Folder',
-        command=self.select_path, bg='#34373c', fg='#f2f2f2')
-        self.choose_path_btn.grid(row=0, column=0, sticky=tk.NSEW)
+        # directory_frame
+        directory_frame.rowconfigure(0, weight=5)
+        directory_frame.rowconfigure(1, weight=5)
+        directory_frame.columnconfigure(0, weight=1)
+        directory_frame.columnconfigure(1, weight=9)
+
+        choose_im_dir_btn = tk.Button(directory_frame, text='Image Directory',
+            command=self.select_image_directory, bg=self.bg, fg=self.fg)
+        choose_im_dir_btn.grid(row=0, column=0, sticky=tk.NSEW)
 
         self.im_dir = tk.StringVar()
-        self.path_entry = tk.Entry(folder_frame, text=self.im_dir, state='readonly')
-        self.path_entry.grid(row=0, column=1, padx=5, sticky=tk.NSEW)
+        im_dir_entry = tk.Entry(directory_frame, text=self.im_dir, state='readonly')
+        im_dir_entry.grid(row=0, column=1, sticky=tk.NSEW)
+
+        choose_anno_dir_bn = tk.Button(directory_frame, text='Annotation Directory',
+            command=self.select_annotation_directory, bg=self.bg, fg=self.fg)
+        choose_anno_dir_bn.grid(row=1, column=0, sticky=tk.NSEW)
+
+        self.anno_dir = tk.StringVar()
+        anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state='readonly')
+        anno_dir_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
     def callback(self, event=None):
         im_id = self.listbox.curselection()
@@ -205,13 +221,17 @@ class VOC_Viewer(tk.Tk):
         if show_x!=im_wt or show_y!=im_ht:
             im = cv2.resize(im, (show_x, show_y))
             print('doing resize!')
-            print('show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
+            print('show_x=%d, im_wt=%d, show_y=%d, im_ht=%d' % (show_x, im_wt, show_y, im_ht))
         scale_x = im_wt*1.0 / show_x
         scale_y = im_ht*1.0 / show_y
-        xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
+        # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
+        # We don't assume a standard PASCAL VOC dataset directory. 
+        # User should choose image and annotation folder seperately.
+        im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
+        xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
         print('XML annotation file is:', xml_pth, end=', ')
         if os.path.exists(xml_pth):
-            print('')
+            print('exist')
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 xmin = int(box.x1/scale_x)
@@ -229,7 +249,7 @@ class VOC_Viewer(tk.Tk):
                 color = (0, 0, 255, 0)
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
-            print("doesn't exist")
+            print("doesn't exist!")
         tkim = self.cv_to_tk(im)
         return tkim
 
@@ -262,10 +282,14 @@ class VOC_Viewer(tk.Tk):
         boxes = anno.get_boxes()
         return boxes
 
-    def select_path(self):
-        pth = askdirectory()
+    def select_image_directory(self):
+        im_dir = askdirectory()
         self.listbox.delete(0, len(self.im_names)-1) # delete all elements
-        self.fill_im_names(pth)
+        self.fill_im_names(im_dir)
+
+    def select_annotation_directory(self):
+        anno_dir = askdirectory()
+        self.anno_dir.set(anno_dir) # TODO: validate anno_dir
 
     def fill_im_names(self, im_dir):
         if im_dir is not None:
