@@ -2,7 +2,7 @@
 
 A GUI, for object detection dataset. Displaying single image with bounding boxes (if any). Now only support PASCAL VOC format.
 
-![](./screenshot.png)
+[![tdozxe.md.png](https://s1.ax1x.com/2020/06/03/tdozxe.md.png)](https://imgchr.com/i/tdozxe)
 
 ## Dependencies
 

@@ -16,6 +16,7 @@ Changelog:
 
 - 2020-06-02 16:40   v0.2
     User choose image and annotation folders separately. Better UI layout.
+    Colorful boxes and class name text.
 
 - 2020-06-01 14:44  v0.1
     Draw object class name. Add license. Polish meta info. Adjust UI.
@@ -31,6 +32,8 @@ import os
 import cv2
 from lxml import etree
 import numpy as np
+import random
+import colorsys
 
 try: # py3
     import tkinter as tk
@@ -93,6 +96,17 @@ class PascalVOC2007XML:
         return self.boxes
 
 
+def get_color_table(num_cls=20):
+    # num_cls: number of classes.  20 for voc, 80 for coco
+    hsv_tuples = [(x / num_cls, 1., 1.) for x in range(80)]
+    colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    random.seed(42)
+    random.shuffle(colors)
+    random.seed(None)
+    return colors
+
+
 class VOC_Viewer(tk.Tk):
     def __init__(self, im_dir=None, show_x=None, show_y=None, box_thick=1):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
@@ -120,7 +134,24 @@ class VOC_Viewer(tk.Tk):
         self.minsize(800, 600)
 
         self.init_components(im_dir)
+        self.init_dataset()
     
+    def init_dataset(self):
+        self.cls_names = [ #'__background__',
+           'aeroplane', 'bicycle', 'bird', 'boat',
+           'bottle', 'bus', 'car', 'cat', 'chair',
+           'cow', 'diningtable', 'dog', 'horse',
+           'motorbike', 'person', 'pottedplant',
+           'sheep', 'sofa', 'train', 'tvmonitor'
+        ]
+        self.num_classes = len(self.cls_names)
+        self.color_table = get_color_table(self.num_classes)
+        self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
+    
+    def get_color_by_cls_name(self, cls_name):
+        ind = self.class_to_ind[cls_name]
+        return self.color_table[ind]
+
     def init_components(self, im_dir):
         # 设置顶级窗体的行列权重，否则子组件的拉伸不会填充整个窗体
         # ref: https://blog.csdn.net/acaic/article/details/80963688
@@ -238,15 +269,15 @@ class VOC_Viewer(tk.Tk):
                 ymin = int(box.y1/scale_y)
                 xmax = int(box.x2/scale_x)
                 ymax = int(box.y2/scale_y)
-                cv2.rectangle(im,  pt1=(xmin, ymin), pt2=(xmax, ymax),
-                          color=(0, 255, 0), thickness=self.box_thick)
+                color = self.get_color_by_cls_name(box.cls_name)
+                cv2.rectangle(im, pt1=(xmin, ymin), pt2=(xmax, ymax),
+                          color = color, thickness=self.box_thick)
                 font_size = 16
                 font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
                 tx = xmin
                 ty = ymin-20
                 if(ty<0): ty = ymin+20
                 text_org = (tx, ty)
-                color = (0, 0, 255, 0)
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
             print("doesn't exist!")
