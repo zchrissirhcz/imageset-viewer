@@ -1,28 +1,27 @@
 # ImageSet Viewer
 
-A GUI, for object detection dataset. Displaying single image with bounding boxes (if any). Now only support PASCAL VOC format.
+[ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a Python Tkinter based GUI program, displaying images with corresponding labels. Currently it support PASCAL VOC object detection format, the very popular xml-format-based bbox annotation format, drawing bounding boxes and class names for annotated objects. For people who do object detection training, concerns what labeled objects are looks like, concerns if objects are labeled with correct categories, and don't want
+rewrite "show-boxes" programs over and over again, just pick ImageSet Viewer and use it!
+
+
+## Getting started
+
+Install:
+```bash
+git clone https://github.com/zchrissirhcz/imageset-viewer
+cd imageset-viewer
+pip install -r requirements.txt
+```
+
+Run:
+```bash
+python imageset-viewer.py
+```
+Choosing image and annotation directory seperately, you'll see annotated images. Use mouse or arrow keys to switch to different images.
 
 [![tdozxe.md.png](https://s1.ax1x.com/2020/06/03/tdozxe.md.png)](https://imgchr.com/i/tdozxe)
 
-## Dependencies
 
-- Python
+## License
 
-    Support Python 2 & 3
-
-    Anaconda installed Python is recommended
-
-- Python packages
-
-    `pip install image pillow lxml numpy opencv-python`
-
-- apt packages
-
-    `sudo apt-get install python-imaging-tk` # execute this line if pip can't install image
-
-## Supported Features
-- Choosing image and annotation directories via button, separately
-- Viewing images with annotated bounding boxes via mouse or arrowdown key
-- Change box thickness (in code)
-- Displaying with specified resizing image height/width (in code)
-- Show object class name, supporting Chinese chars
+MIT
