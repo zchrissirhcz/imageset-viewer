@@ -6,13 +6,17 @@ from __future__ import print_function
 __author__ = 'Zhuo Zhang'
 __copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
 __license__ = 'MIT'
-__version__ = '0.2'
+__version__ = '0.3'
 __email__ = 'imzhuo@foxmail.com'
 __status__ = 'Development'
 __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
 
 """
 Changelog:
+
+- 2020-06-09 23:14   v0.3
+    User select saving directory(optional) for picking up interested images.
+    By pressing left control button, selected image is saved.
 
 - 2020-06-02 16:40   v0.2
     User choose image and annotation folders separately. Better UI layout.
@@ -34,6 +38,7 @@ from lxml import etree
 import numpy as np
 import random
 import colorsys
+import shutil
 
 try: # py3
     import tkinter as tk
@@ -224,6 +229,8 @@ class VOC_Viewer(tk.Tk):
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
         self.listbox.bind('<<ListboxSelect>>', self.callback)
+        # more key binds see https://www.cnblogs.com/muziyunxuan/p/8297536.html
+        self.listbox.bind('<Control_L>', self.save_image)
         self.scrollbar.config(command=self.listbox.yview)
         self.scrollbar.grid(row=1, column=1, sticky=tk.NS)
 
@@ -236,16 +243,14 @@ class VOC_Viewer(tk.Tk):
         anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state='readonly')
         anno_dir_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
-        # # copy (save) dir button
-        # choose_save_dir_btn = tk.Button(directory_frame, text='Copy Save Directory',
-        #     command=self.select_save_directory, bg=self.bg, fg=self.fg)
-        # choose_save_dir_btn.grid(row=2, column=0, sticky=tk.NSEW)
+        # copy (save) dir button
+        choose_save_dir_btn = tk.Button(directory_frame, text='Copy Save Directory',
+            command=self.select_save_directory, bg=self.bg, fg=self.fg)
+        choose_save_dir_btn.grid(row=2, column=0, sticky=tk.NSEW)
 
-        # self.save_dir = tk.StringVar()
-        # save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state='readonly')
-        # save_dir_entry.grid(row=2, column=1, sticky=tk.NSEW)
-
-        # self.bind("SPACE", self.save_image)
+        self.save_dir = tk.StringVar()
+        save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state='readonly')
+        save_dir_entry.grid(row=2, column=1, sticky=tk.NSEW)
 
     def callback(self, event=None):
         im_id = self.listbox.curselection()
@@ -258,8 +263,19 @@ class VOC_Viewer(tk.Tk):
                 self.image_label.configure(image=self.tkim)
                 #print(im_pth)
 
-    def save_image(self):
-        print("===== You just print space")
+    def save_image(self, event):
+        """保存（拷贝）选中的图片到目录
+        当前设定为，按左Control键，把当前浏览的图片存储到指定的保存路径。用于手工挑选图片
+        """
+        im_id = self.listbox.curselection()
+        if im_id:
+            im_name = self.listbox.get(im_id)
+            if (im_name.endswith('.jpg') or im_name.endswith('.png')):
+                im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
+                save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
+                shutil.copyfile(im_pth, save_pth)
+                print('Save(copy) to ' + save_pth)
+                #print(im_pth)
 
     def get_tkim(self, im_pth):
         """
