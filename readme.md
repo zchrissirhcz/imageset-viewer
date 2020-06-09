@@ -27,11 +27,16 @@ python imageset-viewer.py
 
 
 **View Labels**
+
 Choose image and annotation(xml) directories first. 
+
 Use $\uparrow$ and $\downarrow$ keys, mouse left click and drag scoll bar for navigation.
 
+
 **Pick up images**
+
 Choose saving directory first.
+
 Press left control key(`Control_L`) to save(copy) current image.
 
 
