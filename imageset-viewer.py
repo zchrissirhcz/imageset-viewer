@@ -365,7 +365,7 @@ class VOC_Viewer(tk.Tk):
 
 if __name__ == '__main__':
     # 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
-    app = VOC_Viewer(im_dir=None, box_thick=1)
+    app = VOC_Viewer(im_dir=None, box_thick=2)
 
     """
     ## 也可以在代码中指定

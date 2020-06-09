@@ -18,7 +18,7 @@ python imageset-viewer.py
 
 Then choose image and annotation directories, will get visualized:
 
-[![tdozxe.png](https://s1.ax1x.com/2020/06/03/tdozxe.png)](https://imgchr.com/i/tdozxe)
+[![tIK4Dx.png](https://s1.ax1x.com/2020/06/09/tIK4Dx.png)](https://imgchr.com/i/tIK4Dx)
 
 
 License:
