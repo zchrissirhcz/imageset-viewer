@@ -131,7 +131,7 @@ class VOC_Viewer(tk.Tk):
         self.fg = '#f2f2f2'
 
         # set title, window size and background
-        self.title('ImageSet Viewer')
+        self.title('ImageSet Viewer ' + __version__)
         self.width = (int)(0.6 * self.winfo_screenwidth())
         self.height = (int)(0.6 * self.winfo_screenheight())
         self.geometry('%dx%d+200+100' % (self.width, self.height))
