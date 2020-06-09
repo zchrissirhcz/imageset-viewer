@@ -165,20 +165,28 @@ class VOC_Viewer(tk.Tk):
         side_frame = tk.LabelFrame(self, bg=self.bg)
         side_frame.grid(row=0, column=1, padx=10, pady=10, sticky=tk.NSEW)
 
-        # main_frame: directory_frame & image region
-        main_frame.rowconfigure(0, weight=5)
-        main_frame.rowconfigure(1, weight=95)
+        # main_frame: directory_frame & image_frame
+        main_frame.rowconfigure(0, weight=20)
+        main_frame.rowconfigure(1, weight=80)
         main_frame.columnconfigure(0, weight=1)
 
-        directory_frame = tk.LabelFrame(main_frame, bg='#34373c')
+        directory_frame = tk.LabelFrame(main_frame, bg=self.bg)
         directory_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
+        image_frame_height = (int)(0.7*self.height)
+        image_frame = tk.LabelFrame(main_frame, height=image_frame_height, bg=self.bg)
+        image_frame.grid(row=1, column=0, sticky=tk.NSEW)
+        # 使组件大小不变 https://zhidao.baidu.com/question/1643979034294549180.html
+        image_frame.grid_propagate(0)
+
+        # image_frame
+        image_frame.rowconfigure(0, weight=1)
+        image_frame.columnconfigure(0, weight=1)
         self.surface = self.get_surface_image() # Surface image
         # self.surface = self.cv_to_tk(cv2.imread('surface.jpg')) # Use image file
-        self.image_label = tk.Label(main_frame, image=self.surface,
-                          bg=self.bg, fg=self.fg, compound='center')
-        
-        self.image_label.grid(row=1, column=0)
+        self.image_label = tk.Label(image_frame, image=self.surface,
+                          bg=self.bg, fg=self.fg,compound='center')
+        self.image_label.grid(row=0, column=0, sticky=tk.NSEW)
 
         # side_frame
         side_frame.rowconfigure(0, weight=5)
@@ -190,7 +198,23 @@ class VOC_Viewer(tk.Tk):
         self.scrollbar = tk.Scrollbar(side_frame, orient=tk.VERTICAL)
 
         self.listbox = tk.Listbox(side_frame, yscrollcommand=self.scrollbar.set)
-        self.listbox.grid(row=1, column=0, sticky=tk.NSEW)
+        self.listbox.grid(row=1, column=0, sticky=tk.NS)
+
+        # directory_frame
+        directory_frame.rowconfigure(0, weight=5)
+        directory_frame.rowconfigure(1, weight=5)
+        directory_frame.rowconfigure(2, weight=5)
+        directory_frame.columnconfigure(0, weight=1)
+        directory_frame.columnconfigure(1, weight=9)
+
+        # im_dir button
+        choose_im_dir_btn = tk.Button(directory_frame, text='Image Directory',
+            command=self.select_image_directory, bg=self.bg, fg=self.fg)
+        choose_im_dir_btn.grid(row=0, column=0, sticky=tk.NSEW)
+
+        self.im_dir = tk.StringVar()
+        im_dir_entry = tk.Entry(directory_frame, text=self.im_dir, state='readonly')
+        im_dir_entry.grid(row=0, column=1, sticky=tk.NSEW)
 
         self.im_names = []
         if im_dir is not None:
@@ -201,22 +225,9 @@ class VOC_Viewer(tk.Tk):
                 self.listbox.insert(tk.END, im_name)
         self.listbox.bind('<<ListboxSelect>>', self.callback)
         self.scrollbar.config(command=self.listbox.yview)
-        self.scrollbar.grid(row=1, sticky=tk.NSEW)
+        self.scrollbar.grid(row=1, column=1, sticky=tk.NS)
 
-        # directory_frame
-        directory_frame.rowconfigure(0, weight=5)
-        directory_frame.rowconfigure(1, weight=5)
-        directory_frame.columnconfigure(0, weight=1)
-        directory_frame.columnconfigure(1, weight=9)
-
-        choose_im_dir_btn = tk.Button(directory_frame, text='Image Directory',
-            command=self.select_image_directory, bg=self.bg, fg=self.fg)
-        choose_im_dir_btn.grid(row=0, column=0, sticky=tk.NSEW)
-
-        self.im_dir = tk.StringVar()
-        im_dir_entry = tk.Entry(directory_frame, text=self.im_dir, state='readonly')
-        im_dir_entry.grid(row=0, column=1, sticky=tk.NSEW)
-
+        # anno_dir button
         choose_anno_dir_bn = tk.Button(directory_frame, text='Annotation Directory',
             command=self.select_annotation_directory, bg=self.bg, fg=self.fg)
         choose_anno_dir_bn.grid(row=1, column=0, sticky=tk.NSEW)
@@ -225,15 +236,30 @@ class VOC_Viewer(tk.Tk):
         anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state='readonly')
         anno_dir_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
+        # # copy (save) dir button
+        # choose_save_dir_btn = tk.Button(directory_frame, text='Copy Save Directory',
+        #     command=self.select_save_directory, bg=self.bg, fg=self.fg)
+        # choose_save_dir_btn.grid(row=2, column=0, sticky=tk.NSEW)
+
+        # self.save_dir = tk.StringVar()
+        # save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state='readonly')
+        # save_dir_entry.grid(row=2, column=1, sticky=tk.NSEW)
+
+        # self.bind("SPACE", self.save_image)
+
     def callback(self, event=None):
         im_id = self.listbox.curselection()
         if im_id:
+            print('---- im_id is: ', im_id)
             im_name = self.listbox.get(im_id)
             if (im_name.endswith('.jpg') or im_name.endswith('.png')):
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
-                # print(im_pth)
+                #print(im_pth)
+
+    def save_image(self):
+        print("===== You just print space")
 
     def get_tkim(self, im_pth):
         """
@@ -276,7 +302,9 @@ class VOC_Viewer(tk.Tk):
                 font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
                 tx = xmin
                 ty = ymin-20
-                if(ty<0): ty = ymin+20
+                if(ty<0): 
+                    ty = ymin+10
+                    tx = xmin+10
                 text_org = (tx, ty)
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
@@ -321,6 +349,10 @@ class VOC_Viewer(tk.Tk):
     def select_annotation_directory(self):
         anno_dir = askdirectory()
         self.anno_dir.set(anno_dir) # TODO: validate anno_dir
+
+    def select_save_directory(self):
+        save_dir = askdirectory()
+        self.save_dir.set(save_dir) # the directory to save(copy) select images
 
     def fill_im_names(self, im_dir):
         if im_dir is not None:
