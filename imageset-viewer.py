@@ -39,6 +39,8 @@ import numpy as np
 import random
 import colorsys
 import shutil
+import platform
+import matplotlib.font_manager as fm # to create font
 
 try: # py3
     import tkinter as tk
@@ -142,10 +144,10 @@ class VOC_Viewer(tk.Tk):
     
     def init_dataset(self):
         self.cls_names = [ #'__background__',
-           #'aeroplane', 'bicycle', 'bird', 'boat',
-           #'bottle', 'bus', 'car', 'cat', 'chair',
-           #'cow', 'diningtable', 'dog', 'horse',
-           #'motorbike', 'person', 'pottedplant',
+           'aeroplane', 'bicycle', 'bird', 'boat',
+           'bottle', 'bus', 'car', 'cat', 'chair',
+           'cow', 'diningtable', 'dog', 'horse',
+           'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor'
         ]
         self.num_classes = len(self.cls_names)
@@ -317,7 +319,7 @@ class VOC_Viewer(tk.Tk):
                 cv2.rectangle(im, pt1=(xmin, ymin), pt2=(xmax, ymax),
                           color = color, thickness=self.box_thick)
                 font_size = 16
-                font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
+                font = self.get_font(font_size)
                 tx = xmin
                 ty = ymin-20
                 if(ty<0): 
@@ -335,6 +337,15 @@ class VOC_Viewer(tk.Tk):
         im = im[:, :, ::-1]  # bgr => rgb
         return ImageTk.PhotoImage(Image.fromarray(im))
 
+    @staticmethod
+    def get_font(font_size):
+        font_pth = None
+        if platform.system()=='Windows':
+            font_pth = '‪C:/Windows/Fonts/msyh.ttc'
+        elif (platform.system()=='Linux'):
+            font_pth = fm.findfont(fm.FontProperties(family='DejaVu Mono'))
+        return ImageFont.truetype(font_pth, font_size)
+
     def get_surface_image(self):
         """Return surface image, which is ImageTK type"""
         im = np.ndarray((256, 256, 3), dtype=np.uint8)
@@ -345,7 +356,7 @@ class VOC_Viewer(tk.Tk):
         im = cv2.resize(im, ((int)(self.width*0.6), (int)(self.height*0.6)))
 
         font_size = 30
-        font = ImageFont.truetype('‪C:/Windows/Fonts/msyh.ttc', font_size)
+        font = self.get_font(font_size)
         text_org = (self.width*0.16, self.height*0.26)
         text = 'ImageSet Viewer'
         im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
