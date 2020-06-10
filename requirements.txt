@@ -3,3 +3,4 @@ pillow
 lxml
 numpy
 opencv-python
+matplotlib

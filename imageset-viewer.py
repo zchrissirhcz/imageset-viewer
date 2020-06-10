@@ -26,7 +26,7 @@ Changelog:
     Draw object class name. Add license. Polish meta info. Adjust UI.
 
 - 2017.10.22 22:36  v0.0
-    Created project. Dependencies: Python, Tkinter(GUI), opencv(image processing), 
+    Created project. Dependencies: Python, Tkinter(GUI), opencv(image processing),
     lxml(annotation parsing).
     You may need this: pip install --upgrade image pillow lxml numpy
 """
@@ -131,6 +131,9 @@ class VOC_Viewer(tk.Tk):
         self.box_thick = box_thick
         self.bg = '#34373c'
         self.fg = '#f2f2f2'
+        # MacOSX's tk is wired and I don't want tkmacosx
+        if platform.system()=='Darwin':
+            self.bg, self.fg = self.fg, self.bg
 
         # set title, window size and background
         self.title('ImageSet Viewer ' + __version__)
@@ -142,7 +145,7 @@ class VOC_Viewer(tk.Tk):
 
         self.init_components(im_dir)
         self.init_dataset()
-    
+
     def init_dataset(self):
         self.cls_names = [ #'__background__',
            'aeroplane', 'bicycle', 'bird', 'boat',
@@ -154,7 +157,7 @@ class VOC_Viewer(tk.Tk):
         self.num_classes = len(self.cls_names)
         self.color_table = get_color_table(self.num_classes)
         self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
-    
+
     def get_color_by_cls_name(self, cls_name):
         ind = self.class_to_ind[cls_name]
         return self.color_table[ind]
@@ -300,7 +303,7 @@ class VOC_Viewer(tk.Tk):
         scale_x = im_wt*1.0 / show_x
         scale_y = im_ht*1.0 / show_y
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
-        # We don't assume a standard PASCAL VOC dataset directory. 
+        # We don't assume a standard PASCAL VOC dataset directory.
         # User should choose image and annotation folder seperately.
         im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
         xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
@@ -323,7 +326,7 @@ class VOC_Viewer(tk.Tk):
                 font = self.get_font(font_size)
                 tx = xmin
                 ty = ymin-20
-                if(ty<0): 
+                if(ty<0):
                     ty = ymin+10
                     tx = xmin+10
                 text_org = (tx, ty)
@@ -342,9 +345,11 @@ class VOC_Viewer(tk.Tk):
     def get_font(font_size):
         font_pth = None
         if platform.system()=='Windows':
-            font_pth = '‪C:/Windows/Fonts/msyh.ttc'
+            font_pth = 'C:/Windows/Fonts/msyh.ttc'
         elif (platform.system()=='Linux'):
             font_pth = fm.findfont(fm.FontProperties(family='DejaVu Mono'))
+        else:
+            font_pth = 'Helvetica'
         return ImageFont.truetype(font_pth, font_size)
 
     def get_surface_image(self):

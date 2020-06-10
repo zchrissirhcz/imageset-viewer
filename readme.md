@@ -1,6 +1,8 @@
 # ImageSet Viewer
 
-[ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a GUI program, visualizing labeled boxes and categories for PASCAL VOC format. Support Python 2 & 3, support Windows & Linux desktop.
+[ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a GUI program, visualizing labeled boxes and categories for PASCAL VOC format.
+
+Support: Python 2 & 3, Windows / Linux / MacOSX desktop.
 
 _News_:
 > 2020-06-09 23:29:21
