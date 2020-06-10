@@ -68,8 +68,7 @@ def draw_text(im, text, text_org, color=(0,0,255,0), font=None):
     im_pil = Image.fromarray(im)
     draw = ImageDraw.Draw(im_pil)
     draw.text(text_org, text, font=font, fill=color)
-    output = np.array(im_pil)
-    return output
+    return np.array(im_pil)
 
 
 class BndBox(object):
@@ -328,8 +327,7 @@ class VOC_Viewer(tk.Tk):
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
             print("doesn't exist!")
-        tkim = self.cv_to_tk(im)
-        return tkim
+        return self.cv_to_tk(im)
 
     @staticmethod
     def cv_to_tk(im):
@@ -351,14 +349,12 @@ class VOC_Viewer(tk.Tk):
         text_org = (self.width*0.16, self.height*0.26)
         text = 'ImageSet Viewer'
         im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
-        
-        surface = self.cv_to_tk(im)
-        return surface
+
+        return self.cv_to_tk(im)
 
     def parse_xml(self, xml_pth):
         anno = PascalVOC2007XML(xml_pth)
-        boxes = anno.get_boxes()
-        return boxes
+        return anno.get_boxes()
 
     def select_image_directory(self):
         im_dir = askdirectory()
