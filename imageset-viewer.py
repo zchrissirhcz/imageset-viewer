@@ -104,7 +104,7 @@ class PascalVOC2007XML:
 
 def get_color_table(num_cls=20):
     # num_cls: number of classes.  20 for voc, 80 for coco
-    hsv_tuples = [(x / num_cls, 1., 1.) for x in range(80)]
+    hsv_tuples = [(x*1.0 / num_cls, 1., 1.) for x in range(num_cls)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
     random.seed(42)
@@ -114,7 +114,7 @@ def get_color_table(num_cls=20):
 
 
 class VOC_Viewer(tk.Tk):
-    def __init__(self, im_dir=None, show_x=None, show_y=None, box_thick=1):
+    def __init__(self, im_dir=None, show_x=None, show_y=None, box_thick=1, *args, **kwargs):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
         @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
@@ -122,7 +122,8 @@ class VOC_Viewer(tk.Tk):
         @param show_y: 图片显示时的高度
         @param box_thick: thickness of bounding box
         """
-        super().__init__()
+        #super().__init__()
+        tk.Tk.__init__(self, *args, **kwargs)
 
         # custom settings
         self.show_x = show_x

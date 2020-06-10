@@ -1,6 +1,6 @@
 # ImageSet Viewer
 
-[ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a GUI program, visualizing labeled boxes and categories for PASCAL VOC format.
+[ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a GUI program, visualizing labeled boxes and categories for PASCAL VOC format. Support Python 2 & 3, support Windows & Linux desktop.
 
 _News_:
 > 2020-06-09 23:29:21
@@ -13,6 +13,7 @@ git clone https://github.com/zchrissirhcz/imageset-viewer
 cd imageset-viewer
 pip install -r requirements.txt
 ```
+
 
 ## Usage
 
@@ -38,6 +39,11 @@ Use $\uparrow$ and $\downarrow$ keys, mouse left click and drag scoll bar for na
 Choose saving directory first.
 
 Press left control key(`Control_L`) to save(copy) current image.
+
+
+**Zoom out big image**
+
+Specify `show_x` and `show_y` in code.
 
 
 ## License
