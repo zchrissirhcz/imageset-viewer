@@ -143,10 +143,10 @@ class VOC_Viewer(tk.Tk):
     
     def init_dataset(self):
         self.cls_names = [ #'__background__',
-           'aeroplane', 'bicycle', 'bird', 'boat',
-           'bottle', 'bus', 'car', 'cat', 'chair',
-           'cow', 'diningtable', 'dog', 'horse',
-           'motorbike', 'person', 'pottedplant',
+           #'aeroplane', 'bicycle', 'bird', 'boat',
+           #'bottle', 'bus', 'car', 'cat', 'chair',
+           #'cow', 'diningtable', 'dog', 'horse',
+           #'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor'
         ]
         self.num_classes = len(self.cls_names)
@@ -307,6 +307,9 @@ class VOC_Viewer(tk.Tk):
             print('exist')
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
+                if (self.class_to_ind.get(box.cls_name, -1)==-1):
+                    # The class name parsed from XML not in specified class names, ignore it
+                    continue
                 xmin = int(box.x1/scale_x)
                 ymin = int(box.y1/scale_y)
                 xmax = int(box.x2/scale_x)
