@@ -117,20 +117,20 @@ def get_color_table(num_cls=20):
 
 
 class VOC_Viewer(tk.Tk):
-    def __init__(self, im_dir=None, show_x=None, show_y=None, box_thick=1, *args, **kwargs):
+    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, *args, **kwargs):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
         @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
-        @param show_x: 图片显示时候的宽度
-        @param show_y: 图片显示时的高度
+        @param show_width: 图片显示时候的最大宽度
+        @param show_height: 图片显示时的最大高度
         @param box_thick: thickness of bounding box
         """
         #super().__init__()
         tk.Tk.__init__(self, *args, **kwargs)
 
         # custom settings
-        self.show_x = show_x
-        self.show_y = show_y
+        self.max_width = max_width
+        self.max_height = max_height
         self.box_thick = box_thick
         self.bg = '#34373c'
         self.fg = '#f2f2f2'
@@ -146,7 +146,7 @@ class VOC_Viewer(tk.Tk):
         self.configure(bg=self.bg)
         self.minsize(800, 600)
 
-        self.init_components(im_dir)
+        self.init_components(im_dir, anno_dir, save_dir)
         self.init_dataset()
 
     def init_dataset(self):
@@ -165,7 +165,7 @@ class VOC_Viewer(tk.Tk):
         ind = self.class_to_ind[cls_name]
         return self.color_table[ind]
 
-    def init_components(self, im_dir):
+    def init_components(self, im_dir, anno_dir, save_dir):
         # 设置顶级窗体的行列权重，否则子组件的拉伸不会填充整个窗体
         # ref: https://blog.csdn.net/acaic/article/details/80963688
         self.rowconfigure(0,weight=1)
@@ -251,6 +251,9 @@ class VOC_Viewer(tk.Tk):
         anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state='readonly')
         anno_dir_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
+        if anno_dir is not None:
+            self.anno_dir.set(anno_dir)
+
         # copy (save) dir button
         choose_save_dir_btn = tk.Button(directory_frame, text='Copy Save Directory',
             command=self.select_save_directory, bg=self.bg, fg=self.fg)
@@ -259,6 +262,9 @@ class VOC_Viewer(tk.Tk):
         self.save_dir = tk.StringVar()
         save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state='readonly')
         save_dir_entry.grid(row=2, column=1, sticky=tk.NSEW)
+
+        if save_dir is not None:
+            self.save_dir.set(save_dir)
 
     def callback(self, event=None):
         im_id = self.listbox.curselection()
@@ -294,17 +300,23 @@ class VOC_Viewer(tk.Tk):
         im = cv2.imread(im_pth)
         logging.info('Image file is: {:s}'.format(im_pth))
         im_ht, im_wt, im_dt = im.shape
-        show_x = self.show_x
-        show_y = self.show_y
-        if show_x is None:
-            show_x = im_wt
-        if show_y is None:
-            show_y = im_ht
-        if show_x!=im_wt or show_y!=im_ht:
-            im = cv2.resize(im, (show_x, show_y))
-            logging.info('doing resize, show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
-        scale_x = im_wt*1.0 / show_x
-        scale_y = im_ht*1.0 / show_y
+        if self.max_width is None or self.max_width >= im_wt:
+            show_width = im_wt
+        else:
+            show_width = self.max_width
+
+        if self.max_height is None or self.max_height >= im_ht:
+            show_height = im_ht
+        else:
+            show_height = self.max_height
+
+        scale_width = im_wt * 1.0 / show_width
+        scale_height = im_ht * 1.0 / show_height
+
+        if show_width!=im_wt or show_height!=im_ht:
+            im = cv2.resize(im, (show_width, show_height))
+            logging.info('doing resize, show_width={:d}, im_wt={:d}, show_height={:d}, im_ht={:d}'.format(show_width, im_wt, show_height, im_ht))
+        
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
         # We don't assume a standard PASCAL VOC dataset directory.
         # User should choose image and annotation folder seperately.
@@ -317,10 +329,10 @@ class VOC_Viewer(tk.Tk):
                 if (self.class_to_ind.get(box.cls_name, -1)==-1):
                     # The class name parsed from XML not in specified class names, ignore it
                     continue
-                xmin = int(box.x1/scale_x)
-                ymin = int(box.y1/scale_y)
-                xmax = int(box.x2/scale_x)
-                ymax = int(box.y2/scale_y)
+                xmin = int(box.x1/scale_width)
+                ymin = int(box.y1/scale_height)
+                xmax = int(box.x2/scale_width)
+                ymax = int(box.y2/scale_height)
                 color = self.get_color_by_cls_name(box.cls_name)
                 cv2.rectangle(im, pt1=(xmin, ymin), pt2=(xmax, ymax),
                           color = color, thickness=self.box_thick)
@@ -397,24 +409,21 @@ class VOC_Viewer(tk.Tk):
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
 
-if __name__ == '__main__':
-    # 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
-    app = VOC_Viewer(im_dir='E:/data/VOC2007/JPEGImages', box_thick=2)
-
-    """
-    ## 也可以在代码中指定
-    ## eg1: 指定图片路径
-    im_dir = '/opt/data/PASCAL_VOC/VOCdevkit2007/TT100/JPEGImages'
-    app = App(root, im_dir)
-
-    ## eg2: 还可以指定显示的图片的长度和宽度，也就是要做图像缩放了。
-    app = App(root, im_dir, show_x=1000, show_y=1000)
-
-    ## eg3: 指定画框的宽度
-    app = App(root, im_dir, box_thick=2)
-    # 或者更多的指定：
-    app = App(root, im_dir, show_x=1000, show_y=1000, box_thick=2)
-    """
-
-    # message loop
+def example1():
+    """例子1：最简单模式：什么参数都不指定"""
+    app = VOC_Viewer()
     app.mainloop()
+
+def example2():
+    """例子2：分别指定各种参数"""
+    app = VOC_Viewer(im_dir='E:/data/VOC2007/JPEGImages',   # 图片目录
+                    anno_dir='E:/data/VOC2007/Annotations', # xml目录
+                    save_dir= 'E:/data/VOC2007/save',  # 挑图保存目录
+                    max_width = 1000,   # 显示图片宽度做多1000像素
+                    max_height = 800,   # 显示图片高度最多1000像素
+                    box_thick=2   # bbox边框宽度
+                    )
+    app.mainloop()
+
+if __name__ == '__main__':
+    example2()

@@ -45,7 +45,7 @@ Press left control key(`Control_L`) to save(copy) current image.
 
 **Zoom out big image**
 
-Specify `show_x` and `show_y` in code.
+Specify `max_width` and `max_height` in code.
 
 
 ## License
