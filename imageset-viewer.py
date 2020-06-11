@@ -117,7 +117,7 @@ def get_color_table(num_cls=20):
 
 
 class VOC_Viewer(tk.Tk):
-    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, *args, **kwargs):
+    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
         @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
@@ -126,7 +126,7 @@ class VOC_Viewer(tk.Tk):
         @param box_thick: thickness of bounding box
         """
         #super().__init__()
-        tk.Tk.__init__(self, *args, **kwargs)
+        tk.Tk.__init__(self)
 
         # custom settings
         self.max_width = max_width
@@ -426,4 +426,5 @@ def example2():
     app.mainloop()
 
 if __name__ == '__main__':
-    example2()
+    example1()
+    #example2()
