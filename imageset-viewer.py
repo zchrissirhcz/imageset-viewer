@@ -41,11 +41,12 @@ import colorsys
 import shutil
 import platform
 import matplotlib.font_manager as fm # to create font
+import six
 
-try: # py3
+if six.PY3
     import tkinter as tk
     from tkinter.filedialog import askdirectory
-except: # py2
+else:
     import Tkinter as tk
     from tkFileDialog import askdirectory
 
