@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from __future__ import print_function
-
 __author__ = 'Zhuo Zhang'
 __copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
 __license__ = 'MIT'
@@ -42,8 +40,12 @@ import shutil
 import platform
 import matplotlib.font_manager as fm # to create font
 import six
+import logging
 
-if six.PY3
+logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG)
+
+if six.PY3:
     import tkinter as tk
     from tkinter.filedialog import askdirectory
 else:
@@ -261,13 +263,14 @@ class VOC_Viewer(tk.Tk):
     def callback(self, event=None):
         im_id = self.listbox.curselection()
         if im_id:
-            print('---- im_id is: ', im_id)
+            im_id = im_id[0]
+            logging.info('im_id is {:d}'.format(im_id))
             im_name = self.listbox.get(im_id)
             if (im_name.endswith('.jpg') or im_name.endswith('.png')):
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
-                #print(im_pth)
+                #logging.debug(im_pth)
 
     def save_image(self, event):
         """保存（拷贝）选中的图片到目录
@@ -280,8 +283,8 @@ class VOC_Viewer(tk.Tk):
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
                 shutil.copyfile(im_pth, save_pth)
-                print('Save(copy) to ' + save_pth)
-                #print(im_pth)
+                logging.info('Save(copy) to {:s}'.format(save_pth))
+                #logging.debug(im_pth)
 
     def get_tkim(self, im_pth):
         """
@@ -289,7 +292,7 @@ class VOC_Viewer(tk.Tk):
         When necessary, image resizing is utilized.
         """
         im = cv2.imread(im_pth)
-        print('Image file is:', im_pth)
+        logging.info('Image file is: {:s}'.format(im_pth))
         im_ht, im_wt, im_dt = im.shape
         show_x = self.show_x
         show_y = self.show_y
@@ -299,8 +302,7 @@ class VOC_Viewer(tk.Tk):
             show_y = im_ht
         if show_x!=im_wt or show_y!=im_ht:
             im = cv2.resize(im, (show_x, show_y))
-            print('doing resize!')
-            print('show_x=%d, im_wt=%d, show_y=%d, im_ht=%d' % (show_x, im_wt, show_y, im_ht))
+            logging.info('doing resize, show_x={:d}, im_wt={:d}, show_y={:d}, im_ht={:d}'.format(show_x, im_wt, show_y, im_ht))
         scale_x = im_wt*1.0 / show_x
         scale_y = im_ht*1.0 / show_y
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
@@ -308,9 +310,8 @@ class VOC_Viewer(tk.Tk):
         # User should choose image and annotation folder seperately.
         im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
         xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
-        print('XML annotation file is:', xml_pth, end=', ')
         if os.path.exists(xml_pth):
-            print('exist')
+            logging.info('XML annotation file is {:s}'.format(xml_pth))
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 if (self.class_to_ind.get(box.cls_name, -1)==-1):
@@ -333,7 +334,7 @@ class VOC_Viewer(tk.Tk):
                 text_org = (tx, ty)
                 im = draw_text(im, box.cls_name, text_org, color, font)
         else:
-            print("doesn't exist!")
+            logging.warn("XML annotation file {:s} doesn't exist".format(xml_pth))
         return self.cv_to_tk(im)
 
     @staticmethod
@@ -398,7 +399,7 @@ class VOC_Viewer(tk.Tk):
 
 if __name__ == '__main__':
     # 最简单的方式：不预设im_dir，打开GUI后自行选择图片路径
-    app = VOC_Viewer(im_dir=None, box_thick=2)
+    app = VOC_Viewer(im_dir='E:/data/VOC2007/JPEGImages', box_thick=2)
 
     """
     ## 也可以在代码中指定
