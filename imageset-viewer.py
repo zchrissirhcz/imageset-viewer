@@ -160,6 +160,7 @@ class VOC_Viewer(tk.Tk):
         self.num_classes = len(self.cls_names)
         self.color_table = get_color_table(self.num_classes)
         self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
+        self.supported_im_ext = ['jpg', 'png', 'jpeg', 'bmp']
 
     def get_color_by_cls_name(self, cls_name):
         ind = self.class_to_ind[cls_name]
@@ -273,7 +274,7 @@ class VOC_Viewer(tk.Tk):
             logging.info('im_id is {:d}'.format(im_id))
             im_name = self.listbox.get(im_id)
             im_ext = im_name.split('.')[-1]
-            if im_ext in ['jpg', 'png', 'jpeg', 'bmp']:
+            if im_ext in self.supported_im_ext:
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
@@ -286,7 +287,8 @@ class VOC_Viewer(tk.Tk):
         im_id = self.listbox.curselection()
         if im_id:
             im_name = self.listbox.get(im_id)
-            if (im_name.endswith('.jpg') or im_name.endswith('.png')):
+            im_ext = im_name.split('.')[-1]
+            if im_ext in self.supported_im_ext:
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
                 shutil.copyfile(im_pth, save_pth)
