@@ -4,13 +4,18 @@
 __author__ = 'Zhuo Zhang'
 __copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
 __license__ = 'MIT'
-__version__ = '0.3'
+__version__ = '0.4'
 __email__ = 'imzhuo@foxmail.com'
 __status__ = 'Development'
 __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
 
 """
 Changelog:
+
+- 2020-06-13 00:48   v0.4
+    API change: add class name mapping dict, mapping xml class name to shown class name.
+    Based on this, ImageNet2012 and self-defined VOC format style dataset labels can show.
+    Supported image extension: bmp, jpg, jpeg, png and their upper cases.
 
 - 2020-06-09 23:14   v0.3
     User select saving directory(optional) for picking up interested images.
@@ -118,7 +123,7 @@ def get_color_table(num_cls=20):
 
 
 class VOC_Viewer(tk.Tk):
-    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1):
+    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, cls_name_to_show=None):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
         @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
@@ -148,16 +153,24 @@ class VOC_Viewer(tk.Tk):
         self.minsize(800, 600)
 
         self.init_components(im_dir, anno_dir, save_dir)
-        self.init_dataset()
+        self.init_dataset(cls_name_to_show)
 
-    def init_dataset(self):
-        self.cls_names = [ #'__background__',
-           'aeroplane', 'bicycle', 'bird', 'boat',
-           'bottle', 'bus', 'car', 'cat', 'chair',
-           'cow', 'diningtable', 'dog', 'horse',
-           'motorbike', 'person', 'pottedplant',
-           'sheep', 'sofa', 'train', 'tvmonitor'
-        ]
+    def init_dataset(self, cls_name_to_show):
+        if cls_name_to_show is None:
+            self.cls_names = [ #'__background__',
+            'aeroplane', 'bicycle', 'bird', 'boat',
+            'bottle', 'bus', 'car', 'cat', 'chair',
+            'cow', 'diningtable', 'dog', 'horse',
+            'motorbike', 'person', 'pottedplant',
+            'sheep', 'sofa', 'train', 'tvmonitor'
+            ]
+            self.cls_name_to_show = dict()
+            for item in self.cls_names:
+                self.cls_name_to_show[item] = item
+        else:
+            self.cls_name_to_show = cls_name_to_show
+            self.cls_names = [_ for _ in cls_name_to_show.keys()]
+
         self.num_classes = len(self.cls_names)
         self.color_table = get_color_table(self.num_classes)
         self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
@@ -333,7 +346,8 @@ class VOC_Viewer(tk.Tk):
             for box in boxes:
                 if (self.class_to_ind.get(box.cls_name, -1)==-1):
                     # The class name parsed from XML not in specified class names, ignore it
-                    continue
+                    # continue
+                    pass
                 xmin = int(box.x1/scale_width)
                 ymin = int(box.y1/scale_height)
                 xmax = int(box.x2/scale_width)
@@ -349,7 +363,10 @@ class VOC_Viewer(tk.Tk):
                     ty = ymin+10
                     tx = xmin+10
                 text_org = (tx, ty)
-                im = draw_text(im, box.cls_name, text_org, color, font)
+                show_text = self.cls_name_to_show[box.cls_name]
+                logging.debug('box.cls_name is:' + box.cls_name)
+                logging.debug('show_text:' + show_text)
+                im = draw_text(im, show_text, text_org, color, font)
         else:
             logging.warn("XML annotation file {:s} doesn't exist".format(xml_pth))
         return self.cv_to_tk(im)
@@ -415,21 +432,73 @@ class VOC_Viewer(tk.Tk):
                 self.listbox.insert(tk.END, im_name)
 
 def example1():
-    """例子1：最简单模式：什么参数都不指定"""
+    """例子1：最简单模式：什么参数都不指定，在GUI中手动选择图片和XML路径"""
     app = VOC_Viewer()
     app.mainloop()
 
 def example2():
-    """例子2：分别指定各种参数"""
-    app = VOC_Viewer(im_dir='E:/data/VOC2007/JPEGImages',   # 图片目录
-                    anno_dir='E:/data/VOC2007/Annotations', # xml目录
-                    save_dir= 'E:/data/VOC2007/save',  # 挑图保存目录
+    """例子2：分别指定各种参数。以标准PASCAL VOC为例"""
+    # 类别字典，key是xml中所写类别，value是希望在GUI界面上显示的类别
+    voc_cls_dict = {
+        '__background__': '背景',
+        'aeroplane': '飞机',
+        'bicycle': '自行车',
+        'bird': '鸟',
+        'boat': '船',
+        'bottle': '瓶子',
+        'bus': '公交车',
+        'car': '汽车',
+        'cat': '猫',
+        'chair': '椅子',
+        'cow': '牛',
+        'diningtable': '餐桌',
+        'dog': '狗',
+        'horse': '马',
+        'motorbike': '摩托车',
+        'person': '人',
+        'pottedplant': '盆栽',
+        'sheep': '绵羊',
+        'sofa': '沙发',
+        'train': '火车',
+        'tvmonitor': '显示器'
+    }
+    app = VOC_Viewer(im_dir = 'D:/data/VOC2007/JPEGImages',   # 图片目录
+                    anno_dir = 'D:/data/VOC2007/Annotations', # xml目录
+                    save_dir = 'D:/data/VOC2007/save',  # 挑图保存目录
                     max_width = 1000,   # 显示图片宽度做多1000像素
                     max_height = 800,   # 显示图片高度最多1000像素
-                    box_thick=2   # bbox边框宽度
+                    box_thick = 2,   # bbox边框宽度
+                    cls_name_to_show = voc_cls_dict
                     )
     app.mainloop()
+
+def example3():
+    """例子3：分别指定各种参数, ImageNet2012"""
+
+    fin = open('imagenet_cls_cn.txt', encoding='UTF-8')
+    lines = [_.strip() for _ in fin.readlines()]
+    fin.close()
+
+    ilsvrc2012_cls_dict = dict()
+    for item in lines:
+        item = item.split(' ')
+        digit_cls_name = item[0]
+        literal_cls_name = ' '.join(item[1:])
+        ilsvrc2012_cls_dict[digit_cls_name] = literal_cls_name
+
+    app = VOC_Viewer(im_dir = 'D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',   # 图片目录
+                    anno_dir = 'D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764', # xml目录
+                    save_dir = None,  # 挑图保存目录
+                    max_width = 1000,   # 显示图片宽度做多1000像素
+                    max_height = 800,   # 显示图片高度最多1000像素
+                    box_thick = 2,  # bbox边框宽度
+                    cls_name_to_show = ilsvrc2012_cls_dict
+                    )
+    app.mainloop()
+
+
 
 if __name__ == '__main__':
     example1()
     #example2()
+    #example3()

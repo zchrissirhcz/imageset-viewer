@@ -5,8 +5,8 @@
 Support: Python 2 & 3, Windows / Linux / MacOSX desktop.
 
 _News_:
-> 2020-06-09 23:29:21
-> Support picking up images by left control
+> 2020-06-13 00:53
+> Support specify xml and shown name mapping dict
 
 ## Install
 
@@ -46,6 +46,11 @@ Press left control key(`Control_L`) to save(copy) current image.
 **Zoom out big image**
 
 Specify `max_width` and `max_height` in code.
+
+
+**Specify own class names**
+
+Specify `cls_name_to_show` in code.
 
 
 ## License
