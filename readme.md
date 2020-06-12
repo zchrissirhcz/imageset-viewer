@@ -48,9 +48,9 @@ Press left control key(`Control_L`) to save(copy) current image.
 Specify `max_width` and `max_height` in code.
 
 
-**Specify own class names**
+**Show customized VOC-format-labeled dataset**
 
-Specify `cls_name_to_show` in code.
+You have to specify `cls_name_to_show` in code. Only specify image directories and xml directories is not enough now.
 
 
 ## License

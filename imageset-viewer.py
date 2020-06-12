@@ -126,12 +126,12 @@ class VOC_Viewer(tk.Tk):
     def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, cls_name_to_show=None):
         # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
-        @param im_dir: 包含图片的路径，也就是"JPEGImages". 要求它的同级目录中包含Annotations目录，里面包含各种xml文件。
-        @param show_width: 图片显示时候的最大宽度
-        @param show_height: 图片显示时的最大高度
+        @param im_dir: the directory which contains images, e.g. "JPEGImages"
+        @param max_width: max image width when image is displayed
+        @param max_height: max image height when image is displayed
         @param box_thick: thickness of bounding box
         """
-        #super().__init__()
+        #super().__init__() # not working for Python2
         tk.Tk.__init__(self)
 
         # custom settings
@@ -157,12 +157,13 @@ class VOC_Viewer(tk.Tk):
 
     def init_dataset(self, cls_name_to_show):
         if cls_name_to_show is None:
+            # default class name mapping dict
             self.cls_names = [ #'__background__',
-            'aeroplane', 'bicycle', 'bird', 'boat',
-            'bottle', 'bus', 'car', 'cat', 'chair',
-            'cow', 'diningtable', 'dog', 'horse',
-            'motorbike', 'person', 'pottedplant',
-            'sheep', 'sofa', 'train', 'tvmonitor'
+                'aeroplane', 'bicycle', 'bird', 'boat',
+                'bottle', 'bus', 'car', 'cat', 'chair',
+                'cow', 'diningtable', 'dog', 'horse',
+                'motorbike', 'person', 'pottedplant',
+                'sheep', 'sofa', 'train', 'tvmonitor'
             ]
             self.cls_name_to_show = dict()
             for item in self.cls_names:
@@ -182,7 +183,8 @@ class VOC_Viewer(tk.Tk):
         return self.color_table[ind]
 
     def init_components(self, im_dir, anno_dir, save_dir):
-        # 设置顶级窗体的行列权重，否则子组件的拉伸不会填充整个窗体
+        # Setting top level widget's row & column weight,
+        # children widgets won't stretch-and-fill-in until setting this weight
         # ref: https://blog.csdn.net/acaic/article/details/80963688
         self.rowconfigure(0,weight=1)
         self.columnconfigure(0,weight=1)
@@ -205,7 +207,8 @@ class VOC_Viewer(tk.Tk):
         image_frame_height = (int)(0.7*self.height)
         image_frame = tk.LabelFrame(main_frame, height=image_frame_height, bg=self.bg)
         image_frame.grid(row=1, column=0, sticky=tk.NSEW)
-        # 使组件大小不变 https://zhidao.baidu.com/question/1643979034294549180.html
+        # keep widgets size stay, instead of change when switching to another image
+        # ref: https://zhidao.baidu.com/question/1643979034294549180.html
         image_frame.grid_propagate(0)
 
         # image_frame
@@ -296,8 +299,8 @@ class VOC_Viewer(tk.Tk):
                 #logging.debug(im_pth)
 
     def save_image(self, event):
-        """保存（拷贝）选中的图片到目录
-        当前设定为，按左Control键，把当前浏览的图片存储到指定的保存路径。用于手工挑选图片
+        """Save (copy) current displayed (original, no box) image to specified saving directory.
+        This is binding to left-control key now. Useful for manually picking up images.
         """
         im_id = self.listbox.curselection()
         if im_id:
@@ -432,13 +435,19 @@ class VOC_Viewer(tk.Tk):
                 self.listbox.insert(tk.END, im_name)
 
 def example1():
-    """例子1：最简单模式：什么参数都不指定，在GUI中手动选择图片和XML路径"""
+    """Example1: The simplest example: don't specify any parameters. 
+    Choose imd ir and xml dir in GUI
+    """
     app = VOC_Viewer()
     app.mainloop()
 
 def example2():
-    """例子2：分别指定各种参数。以标准PASCAL VOC为例"""
-    # 类别字典，key是xml中所写类别，value是希望在GUI界面上显示的类别
+    """Example2: Specify all the specifiable parameters.
+    Take PASCAL VOC as instance
+    """
+    # category mapping dict: key for class name in XML, 
+    # value for shown class name in displayed image
+    # note: you can make key=val if it is understandable
     voc_cls_dict = {
         '__background__': '背景',
         'aeroplane': '飞机',
@@ -462,18 +471,21 @@ def example2():
         'train': '火车',
         'tvmonitor': '显示器'
     }
-    app = VOC_Viewer(im_dir = 'D:/data/VOC2007/JPEGImages',   # 图片目录
-                    anno_dir = 'D:/data/VOC2007/Annotations', # xml目录
-                    save_dir = 'D:/data/VOC2007/save',  # 挑图保存目录
-                    max_width = 1000,   # 显示图片宽度做多1000像素
-                    max_height = 800,   # 显示图片高度最多1000像素
-                    box_thick = 2,   # bbox边框宽度
+    app = VOC_Viewer(im_dir = 'D:/data/VOC2007/JPEGImages',   # image directory
+                    anno_dir = 'D:/data/VOC2007/Annotations', # XML directory
+                    save_dir = 'D:/data/VOC2007/save',  # Picking images saving directory
+                    max_width = 1000,   # max allowed shown image width is 1000
+                    max_height = 800,   # max allowed shown image height is 800
+                    box_thick = 2,   # bounding box thickness
                     cls_name_to_show = voc_cls_dict
                     )
     app.mainloop()
 
 def example3():
-    """例子3：分别指定各种参数, ImageNet2012"""
+    """Example3: Still specify all the specifiable parameters
+    Take ImageNet2012 as example. You can imitate this and
+    show your own PASCAL-VOC-Style-Labeled imageset
+    """
 
     fin = open('imagenet_cls_cn.txt', encoding='UTF-8')
     lines = [_.strip() for _ in fin.readlines()]
@@ -486,12 +498,12 @@ def example3():
         literal_cls_name = ' '.join(item[1:])
         ilsvrc2012_cls_dict[digit_cls_name] = literal_cls_name
 
-    app = VOC_Viewer(im_dir = 'D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',   # 图片目录
-                    anno_dir = 'D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764', # xml目录
-                    save_dir = None,  # 挑图保存目录
-                    max_width = 1000,   # 显示图片宽度做多1000像素
-                    max_height = 800,   # 显示图片高度最多1000像素
-                    box_thick = 2,  # bbox边框宽度
+    app = VOC_Viewer(im_dir = 'D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',   # image directory
+                    anno_dir = 'D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764', # XML directory
+                    save_dir = None,  # not specified saving direcotry
+                    max_width = 1000,   # max allowed shown image width is 1000
+                    max_height = 800,   # max allowed shown image height is 800
+                    box_thick = 2,  # bounding box thickness
                     cls_name_to_show = ilsvrc2012_cls_dict
                     )
     app.mainloop()
