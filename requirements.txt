@@ -4,3 +4,4 @@ lxml
 numpy
 opencv-python
 matplotlib
+natsort

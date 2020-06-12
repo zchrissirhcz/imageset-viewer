@@ -41,6 +41,7 @@ import platform
 import matplotlib.font_manager as fm # to create font
 import six
 import logging
+from natsort import natsorted
 
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG)
@@ -235,7 +236,7 @@ class VOC_Viewer(tk.Tk):
         if im_dir is not None:
             self.im_dir.set(im_dir)
             self.im_names = [_ for _ in os.listdir(self.im_dir.get())]
-            self.im_names.sort()
+            self.im_names = natsorted(self.im_names)
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
         self.listbox.bind('<<ListboxSelect>>', self.callback)
@@ -409,7 +410,7 @@ class VOC_Viewer(tk.Tk):
             self.im_dir.set(im_dir)
             # Get natural order of image file names
             self.im_names = [_ for _ in os.listdir(im_dir)]
-            self.im_names.sort()
+            self.im_names = natsorted(self.im_names)
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
 
