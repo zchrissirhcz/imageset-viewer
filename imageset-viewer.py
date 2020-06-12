@@ -160,7 +160,8 @@ class VOC_Viewer(tk.Tk):
         self.num_classes = len(self.cls_names)
         self.color_table = get_color_table(self.num_classes)
         self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
-        self.supported_im_ext = ['bmp', 'png', 'jpg', 'jpeg', 'JPEG', 'PNG']
+        self.supported_im_ext = ['bmp', 'png', 'jpg', 'jpeg', 
+                                 'BMP', 'PNG', 'JPG', 'JPEG']
 
     def get_color_by_cls_name(self, cls_name):
         ind = self.class_to_ind[cls_name]
