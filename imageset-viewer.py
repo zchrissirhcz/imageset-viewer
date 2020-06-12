@@ -272,7 +272,8 @@ class VOC_Viewer(tk.Tk):
             im_id = im_id[0]
             logging.info('im_id is {:d}'.format(im_id))
             im_name = self.listbox.get(im_id)
-            if (im_name.endswith('.jpg') or im_name.endswith('.png')):
+            im_ext = im_name.split('.')[-1]
+            if im_ext in ['jpg', 'png', 'jpeg', 'bmp']:
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
