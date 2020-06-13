@@ -124,35 +124,18 @@ def get_color_table(num_cls=20):
 
 class VOC_Viewer(tk.Tk):
     def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, cls_name_to_show=None):
-        # 加载图像：tk不支持直接使用jpg图片。需要Pillow模块进行中转
         """
         @param im_dir: the directory which contains images, e.g. "JPEGImages"
         @param max_width: max image width when image is displayed
         @param max_height: max image height when image is displayed
         @param box_thick: thickness of bounding box
+
+        @note loading image: tk doesn't support directly load image. Pillow module is required as intermidiate stuff.
         """
         #super().__init__() # not working for Python2
         tk.Tk.__init__(self)
 
-        # custom settings
-        self.max_width = max_width
-        self.max_height = max_height
-        self.box_thick = box_thick
-        self.bg = '#34373c'
-        self.fg = '#f2f2f2'
-        # MacOSX's tk is wired and I don't want tkmacosx
-        if platform.system()=='Darwin':
-            self.bg, self.fg = self.fg, self.bg
-
-        # set title, window size and background
-        self.title('ImageSet Viewer ' + __version__)
-        self.width = (int)(0.6 * self.winfo_screenwidth())
-        self.height = (int)(0.6 * self.winfo_screenheight())
-        self.geometry('%dx%d+200+100' % (self.width, self.height))
-        self.configure(bg=self.bg)
-        self.minsize(800, 600)
-
-        self.init_components(im_dir, anno_dir, save_dir)
+        self.init_layout(im_dir, anno_dir, save_dir, max_width, max_height, box_thick)
         self.init_dataset(cls_name_to_show)
 
     def init_dataset(self, cls_name_to_show):
@@ -182,7 +165,25 @@ class VOC_Viewer(tk.Tk):
         ind = self.class_to_ind[cls_name]
         return self.color_table[ind]
 
-    def init_components(self, im_dir, anno_dir, save_dir):
+    def init_layout(self, im_dir, anno_dir, save_dir, max_width, max_height, box_thick):
+        # custom settings
+        self.max_width = max_width
+        self.max_height = max_height
+        self.box_thick = box_thick
+        self.bg = '#34373c'
+        self.fg = '#f2f2f2'
+        # MacOSX's tk is wired and I don't want tkmacosx
+        if platform.system()=='Darwin':
+            self.bg, self.fg = self.fg, self.bg
+
+        # set title, window size and background
+        self.title('ImageSet Viewer ' + __version__)
+        self.width = (int)(0.6 * self.winfo_screenwidth())
+        self.height = (int)(0.6 * self.winfo_screenheight())
+        self.geometry('%dx%d+200+100' % (self.width, self.height))
+        self.configure(bg=self.bg)
+        self.minsize(800, 600)
+
         # Setting top level widget's row & column weight,
         # children widgets won't stretch-and-fill-in until setting this weight
         # ref: https://blog.csdn.net/acaic/article/details/80963688
@@ -434,12 +435,14 @@ class VOC_Viewer(tk.Tk):
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
 
+
 def example1():
     """Example1: The simplest example: don't specify any parameters. 
     Choose imd ir and xml dir in GUI
     """
     app = VOC_Viewer()
     app.mainloop()
+
 
 def example2():
     """Example2: Specify all the specifiable parameters.
@@ -481,6 +484,7 @@ def example2():
                     )
     app.mainloop()
 
+
 def example3():
     """Example3: Still specify all the specifiable parameters
     Take ImageNet2012 as example. You can imitate this and
@@ -507,7 +511,6 @@ def example3():
                     cls_name_to_show = ilsvrc2012_cls_dict
                     )
     app.mainloop()
-
 
 
 if __name__ == '__main__':
