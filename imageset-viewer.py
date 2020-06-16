@@ -47,9 +47,7 @@ import matplotlib.font_manager as fm # to create font
 import six
 import logging
 from natsort import natsorted
-
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.DEBUG)
+import time
 
 if six.PY3:
     import tkinter as tk
@@ -122,7 +120,7 @@ def get_color_table(num_cls=20):
     return colors
 
 
-class VOC_Viewer(tk.Tk):
+class VOCViewer(tk.Tk):
     def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, cls_name_to_show=None):
         """
         @param im_dir: the directory which contains images, e.g. "JPEGImages"
@@ -137,6 +135,33 @@ class VOC_Viewer(tk.Tk):
 
         self.init_layout(im_dir, anno_dir, save_dir, max_width, max_height, box_thick)
         self.init_dataset(cls_name_to_show)
+        self.init_logger()
+
+    def init_logger(self):
+        logger = logging.getLogger()  # 不加名称设置root logger
+        logger.setLevel(logging.WARN)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S')
+        
+        time_line = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+        logfile = os.getcwd() + '/view-' + time_line + '.log'
+
+        # 使用FileHandler输出到文件
+        fh = logging.FileHandler(logfile)
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(formatter)
+
+        # 使用StreamHandler输出到屏幕
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        ch.setFormatter(formatter)
+
+        # 添加两个Handler
+        logger.addHandler(ch)
+        logger.addHandler(fh)
+
+        self.logger = logger
 
     def init_dataset(self, cls_name_to_show):
         if cls_name_to_show is None:
@@ -158,7 +183,7 @@ class VOC_Viewer(tk.Tk):
         self.num_classes = len(self.cls_names)
         self.color_table = get_color_table(self.num_classes)
         self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
-        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG', 
+        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG',
                                 'jpg', 'JPG', 'jpeg', 'JPEG', 'jpe', 'jif', 'jfif', 'jfi']
 
     def get_color_by_cls_name(self, cls_name):
@@ -290,14 +315,14 @@ class VOC_Viewer(tk.Tk):
         im_id = self.listbox.curselection()
         if im_id:
             im_id = im_id[0]
-            logging.info('im_id is {:d}'.format(im_id))
+            self.logger.info('im_id is {:d}'.format(im_id))
             im_name = self.listbox.get(im_id)
             im_ext = im_name.split('.')[-1]
             if im_ext in self.supported_im_ext:
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
-                #logging.debug(im_pth)
+                #self.logger.debug(im_pth)
 
     def save_image(self, event):
         """Save (copy) current displayed (original, no box) image to specified saving directory.
@@ -311,8 +336,8 @@ class VOC_Viewer(tk.Tk):
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
                 shutil.copyfile(im_pth, save_pth)
-                logging.info('Save(copy) to {:s}'.format(save_pth))
-                #logging.debug(im_pth)
+                self.logger.info('Save(copy) to {:s}'.format(save_pth))
+                #self.logger.debug(im_pth)
 
     def get_tkim(self, im_pth):
         """
@@ -320,7 +345,7 @@ class VOC_Viewer(tk.Tk):
         When necessary, image resizing is utilized.
         """
         im = cv2.imread(im_pth)
-        logging.info('Image file is: {:s}'.format(im_pth))
+        self.logger.info('Image file is: {:s}'.format(im_pth))
         im_ht, im_wt, im_dt = im.shape
         if self.max_width is None or self.max_width >= im_wt:
             show_width = im_wt
@@ -337,21 +362,21 @@ class VOC_Viewer(tk.Tk):
 
         if show_width!=im_wt or show_height!=im_ht:
             im = cv2.resize(im, (show_width, show_height))
-            logging.info('doing resize, show_width={:d}, im_wt={:d}, show_height={:d}, im_ht={:d}'.format(show_width, im_wt, show_height, im_ht))
-        
+            self.logger.info('doing resize, show_width={:d}, im_wt={:d}, show_height={:d}, im_ht={:d}'.format(show_width, im_wt, show_height, im_ht))
+
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
         # We don't assume a standard PASCAL VOC dataset directory.
         # User should choose image and annotation folder seperately.
         im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
         xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
         if os.path.exists(xml_pth):
-            logging.info('XML annotation file is {:s}'.format(xml_pth))
+            self.logger.info('XML annotation file is {:s}'.format(xml_pth))
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 if (self.class_to_ind.get(box.cls_name, -1)==-1):
                     # The class name parsed from XML not in specified class names, ignore it
-                    # continue
-                    pass
+                    self.logger.warning("class name {:s} not recognized".format(box.cls_name))
+                    continue
                 xmin = int(box.x1/scale_width)
                 ymin = int(box.y1/scale_height)
                 xmax = int(box.x2/scale_width)
@@ -368,11 +393,11 @@ class VOC_Viewer(tk.Tk):
                     tx = xmin+10
                 text_org = (tx, ty)
                 show_text = self.cls_name_to_show[box.cls_name]
-                logging.debug('box.cls_name is:' + box.cls_name)
-                logging.debug('show_text:' + show_text)
+                self.logger.debug('box.cls_name is:' + box.cls_name)
+                self.logger.debug('show_text:' + show_text)
                 im = draw_text(im, show_text, text_org, color, font)
         else:
-            logging.warn("XML annotation file {:s} doesn't exist".format(xml_pth))
+            logger.warning("XML annotation file {:s} doesn't exist".format(xml_pth))
         return self.cv_to_tk(im)
 
     @staticmethod
@@ -389,7 +414,7 @@ class VOC_Viewer(tk.Tk):
         elif (platform.system()=='Linux'):
             font_pth = fm.findfont(fm.FontProperties(family='DejaVu Mono'))
         else:
-            font_pth = 'Helvetica'
+            font_pth = '/Library/Fonts//Songti.ttc'
         return ImageFont.truetype(font_pth, font_size)
 
     def get_surface_image(self):
@@ -437,10 +462,10 @@ class VOC_Viewer(tk.Tk):
 
 
 def example1():
-    """Example1: The simplest example: don't specify any parameters. 
+    """Example1: The simplest example: don't specify any parameters.
     Choose imd ir and xml dir in GUI
     """
-    app = VOC_Viewer()
+    app = VOCViewer()
     app.mainloop()
 
 
@@ -448,7 +473,7 @@ def example2():
     """Example2: Specify all the specifiable parameters.
     Take PASCAL VOC as instance
     """
-    # category mapping dict: key for class name in XML, 
+    # category mapping dict: key for class name in XML,
     # value for shown class name in displayed image
     # note: you can make key=val if it is understandable
     voc_cls_dict = {
@@ -474,9 +499,9 @@ def example2():
         'train': '火车',
         'tvmonitor': '显示器'
     }
-    app = VOC_Viewer(im_dir = 'D:/data/VOC2007/JPEGImages',   # image directory
-                    anno_dir = 'D:/data/VOC2007/Annotations', # XML directory
-                    save_dir = 'D:/data/VOC2007/save',  # Picking images saving directory
+    app = VOCViewer(im_dir = '/Users/chris/data/VOC2007/JPEGImages',   # image directory
+                    anno_dir = '/Users/chris/data/VOC2007/Annotations', # XML directory
+                    save_dir = '/Users/chris/data/VOC2007/save',  # Picking images saving directory
                     max_width = 1000,   # max allowed shown image width is 1000
                     max_height = 800,   # max allowed shown image height is 800
                     box_thick = 2,   # bounding box thickness
@@ -502,7 +527,7 @@ def example3():
         literal_cls_name = ' '.join(item[1:])
         ilsvrc2012_cls_dict[digit_cls_name] = literal_cls_name
 
-    app = VOC_Viewer(im_dir = 'D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',   # image directory
+    app = VOCViewer(im_dir = 'D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',   # image directory
                     anno_dir = 'D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764', # XML directory
                     save_dir = None,  # not specified saving direcotry
                     max_width = 1000,   # max allowed shown image width is 1000
