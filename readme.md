@@ -5,8 +5,9 @@
 Support: Python 2 & 3, Windows / Linux / MacOSX desktop.
 
 _News_:
-> 2020-06-13 00:53
-> Support specify xml and shown name mapping dict
+> 2020-06-16 11:39  
+> Support specifying ignore and not ignore class names (in code)
+
 
 ## Install
 
@@ -50,8 +51,7 @@ Specify `max_width` and `max_height` in code.
 
 **Show customized VOC-format-labeled dataset**
 
-You have to specify `cls_name_to_show` in code. Only specify image directories and xml directories is not enough now.
-
+Check `example3()` function in [imageset-viewer.py](imageset-viewer.py) for imitation.
 
 ## License
 

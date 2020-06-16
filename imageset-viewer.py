@@ -4,13 +4,16 @@
 __author__ = 'Zhuo Zhang'
 __copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
 __license__ = 'MIT'
-__version__ = '0.4'
+__version__ = '0.5'
 __email__ = 'imzhuo@foxmail.com'
 __status__ = 'Development'
 __description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
 
 """
 Changelog:
+
+- 2020-06-16 11:39   v0.5
+    Support specifying ignore and not ignore class names. Better logger. Fix MacOS font.
 
 - 2020-06-13 00:48   v0.4
     API change: add class name mapping dict, mapping xml class name to shown class name.
@@ -110,7 +113,6 @@ class PascalVOC2007XML:
 
 
 def get_color_table(num_cls=20):
-    # num_cls: number of classes.  20 for voc, 80 for coco
     hsv_tuples = [(x*1.0 / num_cls, 1., 1.) for x in range(num_cls)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
@@ -121,24 +123,31 @@ def get_color_table(num_cls=20):
 
 
 class VOCViewer(tk.Tk):
-    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, cls_name_to_show=None):
+    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, 
+            name_mapping=None, ignore_names=None, not_ignore_names=None):
         """
         @param im_dir: the directory which contains images, e.g. "JPEGImages"
         @param max_width: max image width when image is displayed
         @param max_height: max image height when image is displayed
         @param box_thick: thickness of bounding box
+        @param name_mapping: dict of: class name in XML => class name to be viewed
+        @param ignore_names: list of class names that will be ignored on viewer
+        @param not_ignore_names: list of all class names to be viewed
+
+        @note `ignore_names` and `not_ignore_names` shouldn't be setting at the same time
 
         @note loading image: tk doesn't support directly load image. Pillow module is required as intermidiate stuff.
         """
         #super().__init__() # not working for Python2
         tk.Tk.__init__(self)
 
-        self.init_layout(im_dir, anno_dir, save_dir, max_width, max_height, box_thick)
-        self.init_dataset(cls_name_to_show)
         self.init_logger()
+        self.init_layout(im_dir, anno_dir, save_dir, max_width, max_height, box_thick)
+        self.init_dataset(name_mapping, ignore_names, not_ignore_names)
+        
 
     def init_logger(self):
-        logger = logging.getLogger()  # 不加名称设置root logger
+        logger = logging.getLogger()
         logger.setLevel(logging.WARN)
         formatter = logging.Formatter(
             '%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
@@ -147,44 +156,63 @@ class VOCViewer(tk.Tk):
         time_line = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
         logfile = os.getcwd() + '/view-' + time_line + '.log'
 
-        # 使用FileHandler输出到文件
+        # print to file via FileHandler
         fh = logging.FileHandler(logfile)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
 
-        # 使用StreamHandler输出到屏幕
+        # print to screen via StreamHandler
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         ch.setFormatter(formatter)
 
-        # 添加两个Handler
+        # add two Handler
         logger.addHandler(ch)
         logger.addHandler(fh)
 
         self.logger = logger
 
-    def init_dataset(self, cls_name_to_show):
-        if cls_name_to_show is None:
-            # default class name mapping dict
-            self.cls_names = [ #'__background__',
-                'aeroplane', 'bicycle', 'bird', 'boat',
-                'bottle', 'bus', 'car', 'cat', 'chair',
-                'cow', 'diningtable', 'dog', 'horse',
-                'motorbike', 'person', 'pottedplant',
-                'sheep', 'sofa', 'train', 'tvmonitor'
-            ]
-            self.cls_name_to_show = dict()
-            for item in self.cls_names:
-                self.cls_name_to_show[item] = item
-        else:
-            self.cls_name_to_show = cls_name_to_show
-            self.cls_names = [_ for _ in cls_name_to_show.keys()]
 
-        self.num_classes = len(self.cls_names)
-        self.color_table = get_color_table(self.num_classes)
-        self.class_to_ind = dict(zip(self.cls_names, range(self.num_classes)))
-        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG',
-                                'jpg', 'JPG', 'jpeg', 'JPEG', 'jpe', 'jif', 'jfif', 'jfi']
+    def should_ignore(self, cls_name):
+        if self.ignore_names is not None:
+            if cls_name in self.ignore_names:
+                return True
+            else:
+                return False
+        
+        if self.not_ignore_names is not None:
+            if cls_name in self.not_ignore_names:
+                return False
+            return True
+        
+        return False
+
+
+    def init_dataset(self, name_mapping, ignore_names, not_ignore_names):
+        if (ignore_names is not None and not_ignore_names is not None):
+            self.logger.fatal("ignore_names and not_ignore_names can't be setting at the same time")
+
+        self.name_mapping = dict()
+        if name_mapping is not None:
+            self.name_mapping = name_mapping
+
+        self.ignore_names = None
+        if ignore_names is not None:
+            self.ignore_names = ignore_names
+        
+        self.not_ignore_names = None
+        if not_ignore_names is not None:
+            self.not_ignore_names = not_ignore_names
+        
+        self.color_table = get_color_table()
+        self.class_to_ind = dict()
+
+        for cls_name in self.name_mapping.keys():
+            next_ind = len(self.class_to_ind)
+            self.class_to_ind[cls_name] = next_ind
+
+        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG', 
+            'jpg', 'JPG', 'jpeg', 'JPEG', 'jpe', 'jif', 'jfif', 'jfi']
 
     def get_color_by_cls_name(self, cls_name):
         ind = self.class_to_ind[cls_name]
@@ -373,10 +401,11 @@ class VOCViewer(tk.Tk):
             self.logger.info('XML annotation file is {:s}'.format(xml_pth))
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
-                if (self.class_to_ind.get(box.cls_name, -1)==-1):
-                    # The class name parsed from XML not in specified class names, ignore it
-                    self.logger.warning("class name {:s} not recognized".format(box.cls_name))
-                    continue
+                if self.should_ignore(box.cls_name): continue
+                if box.cls_name not in self.name_mapping.keys():
+                    self.name_mapping[box.cls_name] = box.cls_name
+                    next_ind = len(self.class_to_ind)
+                    self.class_to_ind[box.cls_name] = next_ind
                 xmin = int(box.x1/scale_width)
                 ymin = int(box.y1/scale_height)
                 xmax = int(box.x2/scale_width)
@@ -392,7 +421,7 @@ class VOCViewer(tk.Tk):
                     ty = ymin+10
                     tx = xmin+10
                 text_org = (tx, ty)
-                show_text = self.cls_name_to_show[box.cls_name]
+                show_text = self.name_mapping[box.cls_name]
                 self.logger.debug('box.cls_name is:' + box.cls_name)
                 self.logger.debug('show_text:' + show_text)
                 im = draw_text(im, show_text, text_org, color, font)
@@ -462,21 +491,33 @@ class VOCViewer(tk.Tk):
 
 
 def example1():
-    """Example1: The simplest example: don't specify any parameters.
-    Choose imd ir and xml dir in GUI
+    """The simplest example: don't specify any parameters.
+    Choose imd dir and xml dir in GUI
     """
     app = VOCViewer()
     app.mainloop()
 
 
 def example2():
-    """Example2: Specify all the specifiable parameters.
-    Take PASCAL VOC as instance
+    """Specify directories & drawing related settings
+    """
+    app = VOCViewer(im_dir = '/Users/chris/data/VOC2007/JPEGImages',   # image directory
+                    anno_dir = '/Users/chris/data/VOC2007/Annotations', # XML directory
+                    save_dir = '/Users/chris/data/VOC2007/save',  # Picking images saving directory
+                    max_width = 1000,   # max allowed shown image width is 1000
+                    max_height = 800,   # max allowed shown image height is 800
+                    box_thick = 2,   # bounding box thickness
+                    )
+    app.mainloop()
+
+
+def example3():
+    """Specify name mapping
     """
     # category mapping dict: key for class name in XML,
     # value for shown class name in displayed image
     # note: you can make key=val if it is understandable
-    voc_cls_dict = {
+    voc_mapping = {
         '__background__': '背景',
         'aeroplane': '飞机',
         'bicycle': '自行车',
@@ -505,13 +546,28 @@ def example2():
                     max_width = 1000,   # max allowed shown image width is 1000
                     max_height = 800,   # max allowed shown image height is 800
                     box_thick = 2,   # bounding box thickness
-                    cls_name_to_show = voc_cls_dict
+                    name_mapping = voc_mapping #!!
                     )
     app.mainloop()
 
 
-def example3():
-    """Example3: Still specify all the specifiable parameters
+def example4():
+    """Specify ignore_names / not_ignore_names
+    You can specify either ignore_names or not_ignore_names. But can't specify neither.
+    """
+    app = VOCViewer(im_dir = '/Users/chris/data/VOC2007/JPEGImages',   # image directory
+                    anno_dir = '/Users/chris/data/VOC2007/Annotations', # XML directory
+                    save_dir = '/Users/chris/data/VOC2007/save',  # Picking images saving directory
+                    max_width = 1000,   # max allowed shown image width is 1000
+                    max_height = 800,   # max allowed shown image height is 800
+                    box_thick = 2,   # bounding box thickness
+                    not_ignore_names = ['person']
+                    )
+    app.mainloop()
+
+
+def example5():
+    """
     Take ImageNet2012 as example. You can imitate this and
     show your own PASCAL-VOC-Style-Labeled imageset
     """
@@ -533,7 +589,7 @@ def example3():
                     max_width = 1000,   # max allowed shown image width is 1000
                     max_height = 800,   # max allowed shown image height is 800
                     box_thick = 2,  # bounding box thickness
-                    cls_name_to_show = ilsvrc2012_cls_dict
+                    name_mapping = ilsvrc2012_cls_dict
                     )
     app.mainloop()
 
@@ -542,3 +598,5 @@ if __name__ == '__main__':
     example1()
     #example2()
     #example3()
+    #example4()
+    #example5()
