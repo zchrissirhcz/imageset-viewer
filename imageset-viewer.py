@@ -123,7 +123,7 @@ def get_color_table(num_cls=20):
 
 
 class VOCViewer(tk.Tk):
-    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1, 
+    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1,
             name_mapping=None, ignore_names=None, not_ignore_names=None):
         """
         @param im_dir: the directory which contains images, e.g. "JPEGImages"
@@ -144,7 +144,7 @@ class VOCViewer(tk.Tk):
         self.init_logger()
         self.init_layout(im_dir, anno_dir, save_dir, max_width, max_height, box_thick)
         self.init_dataset(name_mapping, ignore_names, not_ignore_names)
-        
+
 
     def init_logger(self):
         logger = logging.getLogger()
@@ -152,7 +152,7 @@ class VOCViewer(tk.Tk):
         formatter = logging.Formatter(
             '%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S')
-        
+
         time_line = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
         logfile = os.getcwd() + '/view-' + time_line + '.log'
 
@@ -179,12 +179,12 @@ class VOCViewer(tk.Tk):
                 return True
             else:
                 return False
-        
+
         if self.not_ignore_names is not None:
             if cls_name in self.not_ignore_names:
                 return False
             return True
-        
+
         return False
 
 
@@ -199,11 +199,11 @@ class VOCViewer(tk.Tk):
         self.ignore_names = None
         if ignore_names is not None:
             self.ignore_names = ignore_names
-        
+
         self.not_ignore_names = None
         if not_ignore_names is not None:
             self.not_ignore_names = not_ignore_names
-        
+
         self.color_table = get_color_table()
         self.class_to_ind = dict()
 
@@ -211,7 +211,7 @@ class VOCViewer(tk.Tk):
             next_ind = len(self.class_to_ind)
             self.class_to_ind[cls_name] = next_ind
 
-        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG', 
+        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG',
             'jpg', 'JPG', 'jpeg', 'JPEG', 'jpe', 'jif', 'jfif', 'jfi']
 
     def get_color_by_cls_name(self, cls_name):
@@ -244,7 +244,8 @@ class VOCViewer(tk.Tk):
         self.columnconfigure(0,weight=1)
 
         # Top Level Layout: main_frame & side_frame
-        main_frame = tk.LabelFrame(self, bg=self.bg)
+        main_frame_width = (int)(0.8*self.width)
+        main_frame = tk.LabelFrame(self, bg=self.bg, width=main_frame_width)
         main_frame.grid(row=0, column=0, padx=10, pady=10, sticky=tk.NSEW)
 
         side_frame = tk.LabelFrame(self, bg=self.bg)
@@ -273,6 +274,7 @@ class VOCViewer(tk.Tk):
         self.image_label = tk.Label(image_frame, image=self.surface,
                           bg=self.bg, fg=self.fg,compound='center')
         self.image_label.grid(row=0, column=0, sticky=tk.NSEW)
+        #self.image_label.bind('<Configure>', self.changeSize) #TODO
 
         # side_frame
         side_frame.rowconfigure(0, weight=5)
@@ -426,7 +428,7 @@ class VOCViewer(tk.Tk):
                 self.logger.debug('show_text:' + show_text)
                 im = draw_text(im, show_text, text_org, color, font)
         else:
-            logger.warning("XML annotation file {:s} doesn't exist".format(xml_pth))
+            self.logger.warning("XML annotation file {:s} doesn't exist".format(xml_pth))
         return self.cv_to_tk(im)
 
     @staticmethod
