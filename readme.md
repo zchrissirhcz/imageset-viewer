@@ -53,6 +53,18 @@ Specify `max_width` and `max_height` in code.
 
 Check `example3()` function in [imageset-viewer.py](imageset-viewer.py) for imitation.
 
+
+**Show remote server's imageset**
+
+You have multiple choices:
+
+- In remote Linux server, setup samba then use addresses like `\\172.15.12.34\some\dir` (Recommended)
+
+- In remote Linux server and local machine, setup X11 forwarding,  then run `imageset-viewer.py` in server and show in local machine.
+    - PyCharm professional
+    - Win10: Ximg + Putty
+
+
 ## License
 
 MIT
