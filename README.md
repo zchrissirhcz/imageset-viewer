@@ -34,7 +34,7 @@ python imageset-viewer.py
 
 Choose image and annotation(xml) directories first. 
 
-Use $\uparrow$ and $\downarrow$ keys, mouse left click and drag scoll bar for navigation.
+Use &#8593;(up arrow) and &#8595;(down arrow) keys, mouse left click and drag scoll bar for navigation.
 
 
 **Pick up images**
