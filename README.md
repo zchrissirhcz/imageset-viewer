@@ -62,7 +62,7 @@ You have multiple choices:
 
 - In remote Linux server and local machine, setup X11 forwarding,  then run `imageset-viewer.py` in server and show in local machine.
     - PyCharm professional
-    - Win10: Ximg + Putty
+    - Win10: [Xming](https://sourceforge.net/projects/xming/) + [Putty](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html)
 
 
 ## License
