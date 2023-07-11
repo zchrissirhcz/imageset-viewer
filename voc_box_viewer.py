@@ -48,7 +48,7 @@ from natsort import natsorted
 
 
 __author__ = 'Zhuo Zhang'
-__copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
+__copyright__ = 'Copyright 2017-2023, Zhuo Zhang'
 __license__ = 'MIT'
 __version__ = '0.5'
 __email__ = 'imzhuo@foxmail.com'
