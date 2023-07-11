@@ -1,14 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-__author__ = 'Zhuo Zhang'
-__copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
-__license__ = 'MIT'
-__version__ = '0.5'
-__email__ = 'imzhuo@foxmail.com'
-__status__ = 'Development'
-__description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
-
 """
 Changelog:
 
@@ -37,27 +29,31 @@ Changelog:
     You may need this: pip install --upgrade image pillow lxml numpy
 """
 
-from PIL import Image, ImageTk, ImageFont, ImageDraw # pillow module
+import time
 import os
+import random
+import shutil
+import platform
+import logging
+import colorsys
+
+import tkinter as tk
+from tkinter.filedialog import askdirectory
+from PIL import Image, ImageTk, ImageFont, ImageDraw # pillow module
 import cv2
 from lxml import etree
 import numpy as np
-import random
-import colorsys
-import shutil
-import platform
 import matplotlib.font_manager as fm # to create font
-import six
-import logging
 from natsort import natsorted
-import time
 
-if six.PY3:
-    import tkinter as tk
-    from tkinter.filedialog import askdirectory
-else:
-    import Tkinter as tk
-    from tkFileDialog import askdirectory
+
+__author__ = 'Zhuo Zhang'
+__copyright__ = 'Copyright 2017-2020, Zhuo Zhang'
+__license__ = 'MIT'
+__version__ = '0.5'
+__email__ = 'imzhuo@foxmail.com'
+__status__ = 'Development'
+__description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
 
 
 def draw_text(im, text, text_org, color=(0,0,255,0), font=None):
