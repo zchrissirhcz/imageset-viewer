@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 **Open GUI**
 ```bash
-python imageset-viewer.py
+python voc_box_viewer.py
 ```
 
 
