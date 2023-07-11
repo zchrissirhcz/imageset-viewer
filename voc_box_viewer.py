@@ -99,9 +99,9 @@ class PascalVOC2007XML:
             for obj in self.tree.xpath('//object'):
                 box = BndBox()
                 for item in obj.getchildren():
-                    if (item.tag=='name'):
+                    if item.tag == 'name':
                         box.cls_name = item.text
-                    elif (item.tag=='bndbox'):
+                    elif item.tag == 'bndbox':
                         coords = [int(float(_.text)) for _ in item.getchildren()]
                         box.x1, box.y1, box.x2, box.y2 = coords
                 self.boxes.append(box)
@@ -185,7 +185,7 @@ class VOCViewer(tk.Tk):
 
 
     def init_dataset(self, name_mapping, ignore_names, not_ignore_names):
-        if (ignore_names is not None and not_ignore_names is not None):
+        if ignore_names is not None and not_ignore_names is not None:
             self.logger.fatal("ignore_names and not_ignore_names can't be setting at the same time")
 
         self.name_mapping = dict()
@@ -222,7 +222,7 @@ class VOCViewer(tk.Tk):
         self.bg = '#34373c'
         self.fg = '#f2f2f2'
         # MacOSX's tk is wired and I don't want tkmacosx
-        if platform.system()=='Darwin':
+        if platform.system() == 'Darwin':
             self.bg, self.fg = self.fg, self.bg
 
         # set title, window size and background
@@ -341,7 +341,7 @@ class VOCViewer(tk.Tk):
         im_id = self.listbox.curselection()
         if im_id:
             im_id = im_id[0]
-            self.logger.info('im_id is {:d}'.format(im_id))
+            self.logger.info(f'im_id is {im_id}')
             im_name = self.listbox.get(im_id)
             im_ext = im_name.split('.')[-1]
             if im_ext in self.supported_im_ext:
@@ -362,7 +362,7 @@ class VOCViewer(tk.Tk):
                 im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
                 save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
                 shutil.copyfile(im_pth, save_pth)
-                self.logger.info('Save(copy) to {:s}'.format(save_pth))
+                self.logger.info(f'Save(copy) to {save_pth}')
                 #self.logger.debug(im_pth)
 
     def get_tkim(self, im_pth):
@@ -371,7 +371,7 @@ class VOCViewer(tk.Tk):
         When necessary, image resizing is utilized.
         """
         im = cv2.imread(im_pth)
-        self.logger.info('Image file is: {:s}'.format(im_pth))
+        self.logger.info(f'Image file is: {im_pth}')
         im_ht, im_wt, im_dt = im.shape
         if self.max_width is None or self.max_width >= im_wt:
             show_width = im_wt
@@ -388,7 +388,7 @@ class VOCViewer(tk.Tk):
 
         if show_width!=im_wt or show_height!=im_ht:
             im = cv2.resize(im, (show_width, show_height))
-            self.logger.info('doing resize, show_width={:d}, im_wt={:d}, show_height={:d}, im_ht={:d}'.format(show_width, im_wt, show_height, im_ht))
+            self.logger.info(f'doing resize, show_width={show_width}, im_wt={im_wt}, show_height={show_height}, im_ht={im_ht}')
 
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
         # We don't assume a standard PASCAL VOC dataset directory.
@@ -396,7 +396,7 @@ class VOCViewer(tk.Tk):
         im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
         xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
         if os.path.exists(xml_pth):
-            self.logger.info('XML annotation file is {:s}'.format(xml_pth))
+            self.logger.info(f'XML annotation file is {xml_pth}')
             boxes = self.parse_xml(xml_pth)
             for box in boxes:
                 if self.should_ignore(box.cls_name): continue
@@ -424,7 +424,7 @@ class VOCViewer(tk.Tk):
                 self.logger.debug('show_text:' + show_text)
                 im = draw_text(im, show_text, text_org, color, font)
         else:
-            self.logger.warning("XML annotation file {:s} doesn't exist".format(xml_pth))
+            self.logger.warning(f"XML annotation file {xml_pth} doesn't exist")
         return self.cv_to_tk(im)
 
     @staticmethod
@@ -436,9 +436,9 @@ class VOCViewer(tk.Tk):
     @staticmethod
     def get_font(font_size):
         font_pth = None
-        if platform.system()=='Windows':
+        if platform.system() == 'Windows':
             font_pth = 'C:/Windows/Fonts/msyh.ttc'
-        elif (platform.system()=='Linux'):
+        elif platform.system() == 'Linux':
             font_pth = fm.findfont(fm.FontProperties(family='DejaVu Mono'))
         else:
             font_pth = '/Library/Fonts//Songti.ttc'
@@ -456,7 +456,7 @@ class VOCViewer(tk.Tk):
         font_size = 30
         font = self.get_font(font_size)
         text_org = (self.width*0.16, self.height*0.26)
-        text = 'ImageSet Viewer'
+        text = 'VOC Box Viewer'
         im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
 
         return self.cv_to_tk(im)
@@ -574,7 +574,7 @@ def example5():
     lines = [_.strip() for _ in fin.readlines()]
     fin.close()
 
-    ilsvrc2012_cls_dict = dict()
+    ilsvrc2012_cls_dict = {}
     for item in lines:
         item = item.split(' ')
         digit_cls_name = item[0]

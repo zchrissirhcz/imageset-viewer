@@ -2,7 +2,7 @@
 
 [ImageSet Viewer](https://github.com/zchrissirhcz/imageset-viewer) is a GUI program, visualizing labeled boxes and categories for Pascal VOC / ImageNet object detection format.
 
-Support Python3 on Windows / Linux / MacOSX desktop. Python2 is no-longer supported.
+Support Windows / Linux / MacOSX desktop with Python >= 3.6
 
 _News_:
 > 2020-06-16 11:39
