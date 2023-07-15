@@ -47,13 +47,15 @@ import matplotlib.font_manager as fm  # to create font
 from natsort import natsorted
 
 
-__author__ = 'Zhuo Zhang'
-__copyright__ = 'Copyright 2017-2023, Zhuo Zhang'
-__license__ = 'MIT'
-__version__ = '0.5'
-__email__ = 'imzhuo@foxmail.com'
-__status__ = 'Development'
-__description__ = 'Tkinter based GUI, visualizing PASCAL VOC object detection annotation'
+__author__ = "Zhuo Zhang"
+__copyright__ = "Copyright 2017-2023, Zhuo Zhang"
+__license__ = "MIT"
+__version__ = "0.5"
+__email__ = "imzhuo@foxmail.com"
+__status__ = "Development"
+__description__ = (
+    "Tkinter based GUI, visualizing PASCAL VOC object detection annotation"
+)
 
 
 def draw_text(im, text, text_org, color=(0, 0, 255, 0), font=None):
@@ -96,12 +98,12 @@ class PascalVOC2007XML:
 
     def get_boxes(self):
         if len(self.boxes) == 0:
-            for obj in self.tree.xpath('//object'):
+            for obj in self.tree.xpath("//object"):
                 box = BndBox()
                 for item in obj.getchildren():
-                    if item.tag == 'name':
+                    if item.tag == "name":
                         box.cls_name = item.text
-                    elif item.tag == 'bndbox':
+                    elif item.tag == "bndbox":
                         coords = [int(float(_.text)) for _ in item.getchildren()]
                         box.x1, box.y1, box.x2, box.y2 = coords
                 self.boxes.append(box)
@@ -109,9 +111,11 @@ class PascalVOC2007XML:
 
 
 def get_color_table(num_cls=20):
-    hsv_tuples = [(x*1.0 / num_cls, 1., 1.) for x in range(num_cls)]
+    hsv_tuples = [(x * 1.0 / num_cls, 1.0, 1.0) for x in range(num_cls)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-    colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    colors = list(
+        map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors)
+    )
     random.seed(42)
     random.shuffle(colors)
     random.seed(None)
@@ -124,8 +128,18 @@ def parse_xml(xml_pth):
 
 
 class VOCViewer(tk.Tk):
-    def __init__(self, im_dir=None, anno_dir=None, save_dir=None, max_width=None, max_height=None, box_thick=1,
-            name_mapping=None, ignore_names=None, not_ignore_names=None):
+    def __init__(
+        self,
+        im_dir=None,
+        anno_dir=None,
+        save_dir=None,
+        max_width=None,
+        max_height=None,
+        box_thick=1,
+        name_mapping=None,
+        ignore_names=None,
+        not_ignore_names=None,
+    ):
         """
         @param im_dir: the directory which contains images, e.g. "JPEGImages"
         @param max_width: max image width when image is displayed
@@ -150,11 +164,12 @@ class VOCViewer(tk.Tk):
         logger = logging.getLogger()
         logger.setLevel(logging.WARN)
         formatter = logging.Formatter(
-            '%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S')
+            "%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
 
-        time_line = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
-        logfile = os.getcwd() + '/view-' + time_line + '.log'
+        time_line = time.strftime("%Y%m%d%H%M", time.localtime(time.time()))
+        logfile = os.getcwd() + "/view-" + time_line + ".log"
 
         # print to file via FileHandler
         fh = logging.FileHandler(logfile)
@@ -188,7 +203,9 @@ class VOCViewer(tk.Tk):
 
     def init_dataset(self, name_mapping, ignore_names, not_ignore_names):
         if ignore_names is not None and not_ignore_names is not None:
-            self.logger.fatal("ignore_names and not_ignore_names can't be setting at the same time")
+            self.logger.fatal(
+                "ignore_names and not_ignore_names can't be setting at the same time"
+            )
 
         self.name_mapping = {}
         if name_mapping is not None:
@@ -209,8 +226,20 @@ class VOCViewer(tk.Tk):
             next_ind = len(self.class_to_ind)
             self.class_to_ind[cls_name] = next_ind
 
-        self.supported_im_ext = ['bmp', 'BMP', 'png', 'PNG',
-            'jpg', 'JPG', 'jpeg', 'JPEG', 'jpe', 'jif', 'jfif', 'jfi']
+        self.supported_im_ext = [
+            "bmp",
+            "BMP",
+            "png",
+            "PNG",
+            "jpg",
+            "JPG",
+            "jpeg",
+            "JPEG",
+            "jpe",
+            "jif",
+            "jfif",
+            "jfi",
+        ]
 
     def get_color_by_cls_name(self, cls_name):
         ind = self.class_to_ind[cls_name]
@@ -221,17 +250,17 @@ class VOCViewer(tk.Tk):
         self.max_width = max_width
         self.max_height = max_height
         self.box_thick = box_thick
-        self.bg = '#34373c'
-        self.fg = '#f2f2f2'
+        self.bg = "#34373c"
+        self.fg = "#f2f2f2"
         # MacOSX's tk is wired and I don't want tkmacosx
-        if platform.system() == 'Darwin':
+        if platform.system() == "Darwin":
             self.bg, self.fg = self.fg, self.bg
 
         # set title, window size and background
-        self.title('ImageSet Viewer ' + __version__)
+        self.title("ImageSet Viewer " + __version__)
         self.width = int(0.6 * self.winfo_screenwidth())
         self.height = int(0.6 * self.winfo_screenheight())
-        self.geometry('%dx%d+200+100' % (self.width, self.height))
+        self.geometry("%dx%d+200+100" % (self.width, self.height))
         self.configure(bg=self.bg)
         self.minsize(800, 600)
 
@@ -269,8 +298,9 @@ class VOCViewer(tk.Tk):
         image_frame.columnconfigure(0, weight=1)
         self.surface = self.get_surface_image()  # Surface image
         # self.surface = self.cv_to_tk(cv2.imread('surface.jpg')) # Use image file
-        self.image_label = tk.Label(image_frame, image=self.surface,
-                          bg=self.bg, fg=self.fg, compound='center')
+        self.image_label = tk.Label(
+            image_frame, image=self.surface, bg=self.bg, fg=self.fg, compound="center"
+        )
         self.image_label.grid(row=0, column=0, sticky=tk.NSEW)
         # self.image_label.bind('<Configure>', self.changeSize) #TODO
 
@@ -278,7 +308,9 @@ class VOCViewer(tk.Tk):
         side_frame.rowconfigure(0, weight=5)
         side_frame.rowconfigure(1, weight=95)
 
-        image_names_label = tk.Label(side_frame, text="Image Files", bg=self.bg, fg=self.fg)
+        image_names_label = tk.Label(
+            side_frame, text="Image Files", bg=self.bg, fg=self.fg
+        )
         image_names_label.grid(row=0, column=0)
 
         self.scrollbar = tk.Scrollbar(side_frame, orient=tk.VERTICAL)
@@ -294,12 +326,17 @@ class VOCViewer(tk.Tk):
         directory_frame.columnconfigure(1, weight=9)
 
         # im_dir button
-        choose_im_dir_btn = tk.Button(directory_frame, text='Image Directory',
-            command=self.select_image_directory, bg=self.bg, fg=self.fg)
+        choose_im_dir_btn = tk.Button(
+            directory_frame,
+            text="Image Directory",
+            command=self.select_image_directory,
+            bg=self.bg,
+            fg=self.fg,
+        )
         choose_im_dir_btn.grid(row=0, column=0, sticky=tk.NSEW)
 
         self.im_dir = tk.StringVar()
-        im_dir_entry = tk.Entry(directory_frame, text=self.im_dir, state='readonly')
+        im_dir_entry = tk.Entry(directory_frame, text=self.im_dir, state="readonly")
         im_dir_entry.grid(row=0, column=1, sticky=tk.NSEW)
 
         self.im_names = []
@@ -309,31 +346,41 @@ class VOCViewer(tk.Tk):
             self.im_names = natsorted(self.im_names)
             for im_name in self.im_names:
                 self.listbox.insert(tk.END, im_name)
-        self.listbox.bind('<<ListboxSelect>>', self.callback)
+        self.listbox.bind("<<ListboxSelect>>", self.callback)
         # more key binds see https://www.cnblogs.com/muziyunxuan/p/8297536.html
-        self.listbox.bind('<Control_L>', self.save_image)
+        self.listbox.bind("<Control_L>", self.save_image)
         self.scrollbar.config(command=self.listbox.yview)
         self.scrollbar.grid(row=1, column=1, sticky=tk.NS)
 
         # anno_dir button
-        choose_anno_dir_bn = tk.Button(directory_frame, text='Annotation Directory',
-            command=self.select_annotation_directory, bg=self.bg, fg=self.fg)
+        choose_anno_dir_bn = tk.Button(
+            directory_frame,
+            text="Annotation Directory",
+            command=self.select_annotation_directory,
+            bg=self.bg,
+            fg=self.fg,
+        )
         choose_anno_dir_bn.grid(row=1, column=0, sticky=tk.NSEW)
 
         self.anno_dir = tk.StringVar()
-        anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state='readonly')
+        anno_dir_entry = tk.Entry(directory_frame, text=self.anno_dir, state="readonly")
         anno_dir_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
         if anno_dir is not None:
             self.anno_dir.set(anno_dir)
 
         # copy (save) dir button
-        choose_save_dir_btn = tk.Button(directory_frame, text='Copy Save Directory',
-            command=self.select_save_directory, bg=self.bg, fg=self.fg)
+        choose_save_dir_btn = tk.Button(
+            directory_frame,
+            text="Copy Save Directory",
+            command=self.select_save_directory,
+            bg=self.bg,
+            fg=self.fg,
+        )
         choose_save_dir_btn.grid(row=2, column=0, sticky=tk.NSEW)
 
         self.save_dir = tk.StringVar()
-        save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state='readonly')
+        save_dir_entry = tk.Entry(directory_frame, text=self.save_dir, state="readonly")
         save_dir_entry.grid(row=2, column=1, sticky=tk.NSEW)
 
         if save_dir is not None:
@@ -343,11 +390,11 @@ class VOCViewer(tk.Tk):
         im_id = self.listbox.curselection()
         if im_id:
             im_id = im_id[0]
-            self.logger.info(f'im_id is {im_id}')
+            self.logger.info(f"im_id is {im_id}")
             im_name = self.listbox.get(im_id)
-            im_ext = im_name.split('.')[-1]
+            im_ext = im_name.split(".")[-1]
             if im_ext in self.supported_im_ext:
-                im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
+                im_pth = os.path.join(self.im_dir.get(), im_name).replace("\\", "/")
                 self.tkim = self.get_tkim(im_pth)
                 self.image_label.configure(image=self.tkim)
                 # self.logger.debug(im_pth)
@@ -359,12 +406,12 @@ class VOCViewer(tk.Tk):
         im_id = self.listbox.curselection()
         if im_id:
             im_name = self.listbox.get(im_id)
-            im_ext = im_name.split('.')[-1]
+            im_ext = im_name.split(".")[-1]
             if im_ext in self.supported_im_ext:
-                im_pth = os.path.join(self.im_dir.get(), im_name).replace('\\', '/')
-                save_pth = os.path.join(self.save_dir.get(), im_name).replace('\\', '/')
+                im_pth = os.path.join(self.im_dir.get(), im_name).replace("\\", "/")
+                save_pth = os.path.join(self.save_dir.get(), im_name).replace("\\", "/")
                 shutil.copyfile(im_pth, save_pth)
-                self.logger.info(f'Save(copy) to {save_pth}')
+                self.logger.info(f"Save(copy) to {save_pth}")
                 # self.logger.debug(im_pth)
 
     def get_tkim(self, im_pth):
@@ -373,7 +420,7 @@ class VOCViewer(tk.Tk):
         When necessary, image resizing is utilized.
         """
         im = cv2.imread(im_pth)
-        self.logger.info(f'Image file is: {im_pth}')
+        self.logger.info(f"Image file is: {im_pth}")
         im_ht, im_wt, im_dt = im.shape
         if self.max_width is None or self.max_width >= im_wt:
             show_width = im_wt
@@ -390,40 +437,48 @@ class VOCViewer(tk.Tk):
 
         if show_width != im_wt or show_height != im_ht:
             im = cv2.resize(im, (show_width, show_height))
-            self.logger.info(f'doing resize, show_width={show_width}, im_wt={im_wt}, show_height={show_height}, im_ht={im_ht}')
+            self.logger.info(
+                f"doing resize, show_width={show_width}, im_wt={im_wt}, show_height={show_height}, im_ht={im_ht}"
+            )
 
         # xml_pth = im_pth.replace('JPEGImages', 'Annotations').replace('.jpg', '.xml').replace('.png', '.xml')
         # We don't assume a standard PASCAL VOC dataset directory.
         # User should choose image and annotation folder separately.
-        im_head = '.'.join(im_pth.split('/')[-1].split('.')[:-1])
-        xml_pth = self.anno_dir.get() + '/' + im_head + '.xml'
+        im_head = ".".join(im_pth.split("/")[-1].split(".")[:-1])
+        xml_pth = self.anno_dir.get() + "/" + im_head + ".xml"
         if os.path.exists(xml_pth):
-            self.logger.info(f'XML annotation file is {xml_pth}')
+            self.logger.info(f"XML annotation file is {xml_pth}")
             boxes = parse_xml(xml_pth)
             for box in boxes:
-                if self.should_ignore(box.cls_name): continue
+                if self.should_ignore(box.cls_name):
+                    continue
                 if box.cls_name not in self.name_mapping.keys():
                     self.name_mapping[box.cls_name] = box.cls_name
                     next_ind = len(self.class_to_ind)
                     self.class_to_ind[box.cls_name] = next_ind
-                xmin = int(box.x1/scale_width)
-                ymin = int(box.y1/scale_height)
-                xmax = int(box.x2/scale_width)
-                ymax = int(box.y2/scale_height)
+                xmin = int(box.x1 / scale_width)
+                ymin = int(box.y1 / scale_height)
+                xmax = int(box.x2 / scale_width)
+                ymax = int(box.y2 / scale_height)
                 color = self.get_color_by_cls_name(box.cls_name)
-                cv2.rectangle(im, pt1=(xmin, ymin), pt2=(xmax, ymax),
-                    color=color, thickness=self.box_thick)
+                cv2.rectangle(
+                    im,
+                    pt1=(xmin, ymin),
+                    pt2=(xmax, ymax),
+                    color=color,
+                    thickness=self.box_thick,
+                )
                 font_size = 16
                 font = self.get_font(font_size)
                 tx = xmin
-                ty = ymin-20
+                ty = ymin - 20
                 if ty < 0:
-                    ty = ymin+10
-                    tx = xmin+10
+                    ty = ymin + 10
+                    tx = xmin + 10
                 text_org = (tx, ty)
                 show_text = self.name_mapping[box.cls_name]
-                self.logger.debug('box.cls_name is:' + box.cls_name)
-                self.logger.debug('show_text:' + show_text)
+                self.logger.debug("box.cls_name is:" + box.cls_name)
+                self.logger.debug("show_text:" + show_text)
                 im = draw_text(im, show_text, text_org, color, font)
         else:
             self.logger.warning(f"XML annotation file {xml_pth} doesn't exist")
@@ -438,12 +493,12 @@ class VOCViewer(tk.Tk):
     @staticmethod
     def get_font(font_size):
         font_pth = None
-        if platform.system() == 'Windows':
-            font_pth = 'C:/Windows/Fonts/msyh.ttc'
-        elif platform.system() == 'Linux':
-            font_pth = fm.findfont(fm.FontProperties(family='DejaVu Mono'))
+        if platform.system() == "Windows":
+            font_pth = "C:/Windows/Fonts/msyh.ttc"
+        elif platform.system() == "Linux":
+            font_pth = fm.findfont(fm.FontProperties(family="DejaVu Mono"))
         else:
-            font_pth = '/Library/Fonts//Songti.ttc'
+            font_pth = "/Library/Fonts//Songti.ttc"
         return ImageFont.truetype(font_pth, font_size)
 
     def get_surface_image(self):
@@ -457,15 +512,15 @@ class VOCViewer(tk.Tk):
 
         font_size = 30
         font = self.get_font(font_size)
-        text_org = (self.width*0.16, self.height*0.26)
-        text = 'VOC Box Viewer'
+        text_org = (self.width * 0.16, self.height * 0.26)
+        text = "VOC Box Viewer"
         im = draw_text(im, text, text_org, color=(255, 255, 255, 255), font=font)
 
         return self.cv_to_tk(im)
 
     def select_image_directory(self):
         im_dir = askdirectory()
-        self.listbox.delete(0, len(self.im_names)-1)  # delete all elements
+        self.listbox.delete(0, len(self.im_names) - 1)  # delete all elements
         self.fill_im_names(im_dir)
 
     def select_annotation_directory(self):
@@ -495,55 +550,55 @@ def example1():
 
 
 def example2():
-    """Specify directories & drawing related settings
-    """
-    app = VOCViewer(im_dir='/Users/chris/data/VOC2007/JPEGImages',     # image directory
-                    anno_dir='/Users/chris/data/VOC2007/Annotations',  # XML directory
-                    save_dir='/Users/chris/data/VOC2007/save',         # Picking images saving directory
-                    max_width=1000,   # max allowed shown image width is 1000
-                    max_height=800,   # max allowed shown image height is 800
-                    box_thick=2,      # bounding box thickness
-                    )
+    """Specify directories & drawing related settings"""
+    app = VOCViewer(
+        im_dir="/Users/chris/data/VOC2007/JPEGImages",  # image directory
+        anno_dir="/Users/chris/data/VOC2007/Annotations",  # XML directory
+        save_dir="/Users/chris/data/VOC2007/save",  # Picking images saving directory
+        max_width=1000,  # max allowed shown image width is 1000
+        max_height=800,  # max allowed shown image height is 800
+        box_thick=2,  # bounding box thickness
+    )
     app.mainloop()
 
 
 def example3():
-    """Specify name mapping
-    """
+    """Specify name mapping"""
     # category mapping dict: key for class name in XML,
     # value for shown class name in displayed image
     # note: you can make key=val if it is understandable
     voc_mapping = {
-        '__background__': '背景',
-        'aeroplane': '飞机',
-        'bicycle': '自行车',
-        'bird': '鸟',
-        'boat': '船',
-        'bottle': '瓶子',
-        'bus': '公交车',
-        'car': '汽车',
-        'cat': '猫',
-        'chair': '椅子',
-        'cow': '牛',
-        'diningtable': '餐桌',
-        'dog': '狗',
-        'horse': '马',
-        'motorbike': '摩托车',
-        'person': '人',
-        'pottedplant': '盆栽',
-        'sheep': '绵羊',
-        'sofa': '沙发',
-        'train': '火车',
-        'tvmonitor': '显示器'
+        "__background__": "背景",
+        "aeroplane": "飞机",
+        "bicycle": "自行车",
+        "bird": "鸟",
+        "boat": "船",
+        "bottle": "瓶子",
+        "bus": "公交车",
+        "car": "汽车",
+        "cat": "猫",
+        "chair": "椅子",
+        "cow": "牛",
+        "diningtable": "餐桌",
+        "dog": "狗",
+        "horse": "马",
+        "motorbike": "摩托车",
+        "person": "人",
+        "pottedplant": "盆栽",
+        "sheep": "绵羊",
+        "sofa": "沙发",
+        "train": "火车",
+        "tvmonitor": "显示器",
     }
-    app = VOCViewer(im_dir='/Users/chris/data/VOC2007/JPEGImages',      # image directory
-                    anno_dir='/Users/chris/data/VOC2007/Annotations',   # XML directory
-                    save_dir='/Users/chris/data/VOC2007/save',          # Picking images saving directory
-                    max_width=1000,     # max allowed shown image width is 1000
-                    max_height=800,     # max allowed shown image height is 800
-                    box_thick=2,        # bounding box thickness
-                    name_mapping=voc_mapping  # !!
-                    )
+    app = VOCViewer(
+        im_dir="/Users/chris/data/VOC2007/JPEGImages",  # image directory
+        anno_dir="/Users/chris/data/VOC2007/Annotations",  # XML directory
+        save_dir="/Users/chris/data/VOC2007/save",  # Picking images saving directory
+        max_width=1000,  # max allowed shown image width is 1000
+        max_height=800,  # max allowed shown image height is 800
+        box_thick=2,  # bounding box thickness
+        name_mapping=voc_mapping,  # !!
+    )
     app.mainloop()
 
 
@@ -551,14 +606,15 @@ def example4():
     """Specify ignore_names / not_ignore_names
     You can specify either ignore_names or not_ignore_names. But can't specify either.
     """
-    app = VOCViewer(im_dir='/Users/chris/data/VOC2007/JPEGImages',      # image directory
-                    anno_dir='/Users/chris/data/VOC2007/Annotations',   # XML directory
-                    save_dir='/Users/chris/data/VOC2007/save',          # Picking images saving directory
-                    max_width=1000,     # max allowed shown image width is 1000
-                    max_height=800,     # max allowed shown image height is 800
-                    box_thick=2,        # bounding box thickness
-                    not_ignore_names=['person']
-                    )
+    app = VOCViewer(
+        im_dir="/Users/chris/data/VOC2007/JPEGImages",  # image directory
+        anno_dir="/Users/chris/data/VOC2007/Annotations",  # XML directory
+        save_dir="/Users/chris/data/VOC2007/save",  # Picking images saving directory
+        max_width=1000,  # max allowed shown image width is 1000
+        max_height=800,  # max allowed shown image height is 800
+        box_thick=2,  # bounding box thickness
+        not_ignore_names=["person"],
+    )
     app.mainloop()
 
 
@@ -568,29 +624,30 @@ def example5():
     show your own PASCAL-VOC-Style-Labeled imageset
     """
 
-    fin = open('imagenet_cls_cn.txt', encoding='UTF-8')
+    fin = open("imagenet_cls_cn.txt", encoding="UTF-8")
     lines = [_.strip() for _ in fin.readlines()]
     fin.close()
 
     ilsvrc2012_cls_dict = {}
     for item in lines:
-        item = item.split(' ')
+        item = item.split(" ")
         digit_cls_name = item[0]
-        literal_cls_name = ' '.join(item[1:])
+        literal_cls_name = " ".join(item[1:])
         ilsvrc2012_cls_dict[digit_cls_name] = literal_cls_name
 
-    app = VOCViewer(im_dir='D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764',         # image directory
-                    anno_dir='D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764',   # XML directory
-                    save_dir=None,      # not specified saving directory
-                    max_width=1000,     # max allowed shown image width is 1000
-                    max_height=800,     # max allowed shown image height is 800
-                    box_thick=2,        # bounding box thickness
-                    name_mapping=ilsvrc2012_cls_dict
-                    )
+    app = VOCViewer(
+        im_dir="D:/data/ILSVRC2012/ILSVRC2012_img_train/n01440764",  # image directory
+        anno_dir="D:/data/ILSVRC2012/ILSVRC2012_bbox_train_v2/n01440764",  # XML directory
+        save_dir=None,  # not specified saving directory
+        max_width=1000,  # max allowed shown image width is 1000
+        max_height=800,  # max allowed shown image height is 800
+        box_thick=2,  # bounding box thickness
+        name_mapping=ilsvrc2012_cls_dict,
+    )
     app.mainloop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     example1()
     # example2()
     # example3()
